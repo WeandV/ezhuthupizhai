@@ -1,0 +1,79 @@
+.select2-search {
+    display: none !important;
+}
+
+.btn-group {
+    border-radius: var(--bs-border-radius);
+}
+
+.dataTables_filter {
+    margin-bottom: 20px !important;
+}
+
+th {
+    padding: 13px 20px !important;
+    vertical-align: middle;
+    font-family: Newsreader, serif;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 16px;
+    color: rgb(107, 114, 128);
+
+}
+
+td {
+    padding: 13px 20px !important;
+    vertical-align: middle;
+    font-family: Newsreader, serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 20px;
+    color: rgb(107, 114, 128);
+}
+
+#snackbox {
+    visibility: hidden;
+    min-width: 250px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 2px;
+    padding: 16px;
+    position: fixed;
+    z-index: 10000;
+    left: 50%;
+    bottom: 30px;
+    transform: translateX(-50%);
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    transition: visibility 0s, opacity 0.5s linear;
+    opacity: 0;
+}
+
+#snackbox.show {
+    visibility: visible;
+    opacity: 1;
+}
+
+#snackbox.success {
+    background-color: #28a745;
+}
+
+#snackbox.error {
+    background-color: #dc3545;
+}
+
+.toggle-details-btn {
+    border: none !important;
+    padding: 0px !important;
+    background: transparent !important;
+}
+
+.form-control:focus {
+    background-color: #fff;
+    border-color: #c27be4;
+    box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px !important;
+}
+
+.fs-13 {
+  font-size: 13px;
+}

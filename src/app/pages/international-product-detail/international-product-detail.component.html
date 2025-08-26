@@ -1,0 +1,66 @@
+<div class="bg-gray-100 min-h-screen py-8">
+  <div class="container mx-auto px-4">
+    <div *ngIf="product" class="bg-white rounded-lg shadow-xl p-8 max-w-4xl mx-auto">
+      <div class="md:flex md:space-x-8">
+        <!-- Product Image and Details -->
+        <div class="md:w-1/2">
+          <img [src]="product.thumbnail_image" [alt]="product.name" class="rounded-lg shadow-md mb-6 w-full object-contain">
+          <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ product.name }}</h1>
+          <p class="text-gray-500 mb-4">{{ product.short_description }}</p>
+          <div class="text-gray-600 mb-6" [innerHTML]="product.description"></div>
+          <p class="text-3xl font-extrabold text-blue-600">${{ product.special_price }}</p>
+        </div>
+
+        <!-- Order Form -->
+        <div class="md:w-1/2 mt-8 md:mt-0">
+          <h2 class="text-2xl font-semibold mb-6">International Order Form</h2>
+
+          <!-- Success Message -->
+          <div *ngIf="submissionSuccess" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-6" role="alert">
+            <strong class="font-bold">Order Received!</strong>
+            <span class="block sm:inline"> Our team will contact you shortly to confirm payment and shipping details.</span>
+          </div>
+
+          <!-- The Form -->
+          <form [formGroup]="orderForm" (ngSubmit)="onSubmit()" *ngIf="!submissionSuccess">
+            <div class="mb-4">
+              <label for="name" class="block text-gray-700 text-sm font-bold mb-2">Name</label>
+              <input formControlName="name" type="text" id="name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+              <p *ngIf="orderForm.get('name')?.invalid && (orderForm.get('name')?.dirty || orderForm.get('name')?.touched)" class="text-red-500 text-xs mt-1">Name is required.</p>
+            </div>
+            
+            <div class="mb-4">
+              <label for="phoneNumber" class="block text-gray-700 text-sm font-bold mb-2">Phone Number</label>
+              <input formControlName="phoneNumber" type="tel" id="phoneNumber" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+              <p *ngIf="orderForm.get('phoneNumber')?.invalid && (orderForm.get('phoneNumber')?.dirty || orderForm.get('phoneNumber')?.touched)" class="text-red-500 text-xs mt-1">Phone number is required.</p>
+            </div>
+
+            <div class="mb-4">
+              <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+              <input formControlName="email" type="email" id="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+              <p *ngIf="orderForm.get('email')?.invalid && (orderForm.get('email')?.dirty || orderForm.get('email')?.touched)" class="text-red-500 text-xs mt-1">Valid email is required.</p>
+            </div>
+
+            <div class="mb-4">
+              <label for="address" class="block text-gray-700 text-sm font-bold mb-2">International Shipping Address</label>
+              <textarea formControlName="address" id="address" rows="4" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+              <p *ngIf="orderForm.get('address')?.invalid && (orderForm.get('address')?.dirty || orderForm.get('address')?.touched)" class="text-red-500 text-xs mt-1">Address is required.</p>
+            </div>
+
+            <div class="mb-6">
+              <label for="quantity" class="block text-gray-700 text-sm font-bold mb-2">Quantity</label>
+              <input formControlName="quantity" type="number" id="quantity" min="1" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+              <p *ngIf="orderForm.get('quantity')?.invalid && (orderForm.get('quantity')?.dirty || orderForm.get('quantity')?.touched)" class="text-red-500 text-xs mt-1">Quantity must be 1 or more.</p>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <button [disabled]="isSubmitting" type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-colors">
+                {{ isSubmitting ? 'Placing Order...' : 'Place Order' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

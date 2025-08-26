@@ -1,0 +1,16 @@
+.address-card.selected-address {
+    background: white;
+    box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+}
+
+.address-card .account-address-box {
+    border: none !important;
+}
+
+.address-card .account-address-bottom {
+    border: none;
+    background-color: transparent;
+}
+.order-detail {
+    border-radius: 0px;
+}

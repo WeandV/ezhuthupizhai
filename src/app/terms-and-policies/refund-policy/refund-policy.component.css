@@ -1,0 +1,36 @@
+/* General styling for lists within the content area */
+.about-style2 ul {
+    list-style: none;     /* Removes default browser bullet points */
+    padding-left: 0;      /* Removes default padding from the ul */
+    margin-bottom: 1.5rem; /* Consistent spacing after the list */
+}
+
+.about-style2 ul li {
+    position: relative;   /* Necessary for positioning the custom bullet */
+    padding-left: 1.2em;  /* Space for the custom bullet to the left of the text */
+    margin-bottom: 0.5em; /* Vertical spacing between list items */
+    line-height: 1.5;     /* Improves readability for the text */
+    color: #495057;       /* A slightly lighter dark grey for list text, common in Bootstrap themes. Adjust if needed. */
+}
+
+.about-style2 ul li::before {
+    content: "\2022";     /* Unicode character for a solid round bullet */
+    color: #212529;       /* This is a standard Bootstrap blue, which closely matches the blue bullet in your screenshot. */
+    font-size: 0.8em;     /* Makes the bullet slightly smaller than the text, as seen in the screenshot */
+    font-weight: bold;    /* Ensures the bullet is solid and prominent */
+    display: inline-block; /* Allows width and margin control */
+    width: 1em;           /* Fixed width for the bullet area */
+    margin-left: 0px;
+    position: absolute;   /* Positions the bullet relative to the list item */
+    left: 0;              /* Aligns the bullet to the start of the li's content area */
+    top: 0.35em;          /* Adjusts vertical alignment of the bullet (fine-tune if needed) */
+}
+
+/* Specific styling for the heading "Items That Cannot Be Returned" */
+.about-style2 h2 {
+    font-size: 2.25rem;   /* A common size for prominent h2 headings */
+    font-weight: 700;     /* Ensures the heading text is bold and stands out */
+    margin-top: 2rem;     /* Spacing above the heading */
+    margin-bottom: 1rem;  /* Spacing below the heading */
+    color: #212529;       /* A very dark grey/nearly black color for strong headings */
+}

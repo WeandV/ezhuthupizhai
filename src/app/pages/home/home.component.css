@@ -1,0 +1,12 @@
+.product-box.style-2 {
+    border-radius: 0px;
+    height: 600px;
+}
+
+.about-style4 .side-content:after {
+    left: 56%;
+}
+
+.masonry-item {
+    width: 200px;
+}

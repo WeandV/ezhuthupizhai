@@ -1,0 +1,49 @@
+<div class="page-content bg-light">
+    <div class="dz-bnr-inr bg-secondary dz-bnr-inr-md"
+        style="background-image:url(assets/images/banner/page-title.jpg);">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-5">
+                    <div class="dz-bnr-inr-entry text-start">
+                        <!-- <h1 class="text-white">Shop In Store</h1> -->
+                        <nav aria-label="breadcrumb" class="breadcrumb-row">
+                            <p class="text-white mb-1 fs-2">ஆன்லைனில் மட்டுமல்லாமல்,</p>
+                            <p class="text-white mb-1 fs-2">உங்கள் அருகாமையிலும்.</p>
+                            <!-- <ul class="breadcrumb text-white">
+                                <li class="breadcrumb-item"><a href="/home" class="text-white"> Home</a></li>
+                                <li class="breadcrumb-item text-white">Shop In Store</li>
+                            </ul> -->
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <section class="dz-pricingtable">
+        <div class="container">
+            <div class="row pricingtable-wraper">
+                <ng-container *ngIf="vendors && vendors.length > 0">
+                    <div class="col-lg-4 col-md-6 h-100 m-b30 wow fadeInUp"
+                        data-wow-delay="0.1s" *ngFor="let vendor of vendors">
+                        <div class="pricingtable-wrapper style-1 bg-light">
+                            <div class="pricingtable-inner">
+                                <div class="pricingtable-title">
+                                <img [src]="vendor.logo || 'https://placehold.co/200x100?text=No+Image'"
+                                    alt="Vendor Logo" class="vendor-logo mb-4" style="width: 200px;">
+                                    <h3 class="title">{{ vendor.name }}</h3>
+                                    <p class="text">Location: {{ getVendorAddress(vendor) }}</p>
+                                    <a *ngIf="vendor.phone" [href]="'tel:' + vendor.phone" class="font-14 read-btn">
+                                        Call:
+                                        +91 {{ vendor.phone }}</a>
+                                    <p *ngIf="!vendor.phone" class="font-14 read-btn">
+                                        Call: Not Available
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </ng-container>
+            </div>
+        </div>
+    </section>
+</div>

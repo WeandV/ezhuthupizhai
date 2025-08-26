@@ -1,0 +1,8 @@
+.col-xl-4 .cart-detail {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 20px;
+}
+.shop-card .price {
+    font-size: 18px;
+}

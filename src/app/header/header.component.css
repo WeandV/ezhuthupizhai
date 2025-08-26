@@ -1,0 +1,45 @@
+.dz-offcanvas.offcanvas.offcanvas-end,
+.dz-offcanvas.offcanvas.offcanvas-top {
+    background-color: var(--light);
+}
+
+.cart-item-controls {
+    margin-top: 10px;
+}
+
+.cart-widget {
+    align-items: start;
+}
+
+.dz-price {
+    margin-left: auto;
+}
+
+.cart-widget {
+    display: flex;
+    align-items: center;
+}
+
+.cart-content {
+    flex-grow: 1;
+    margin-right: 15px;
+}
+
+.dz-close {
+    font-size: 20px;
+    color: #999;
+}
+
+.view-all-coupons-link {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 14px;
+    display: block;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.view-all-coupons-link:hover {
+    text-decoration: underline;
+}

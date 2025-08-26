@@ -1,0 +1,14 @@
+.shop-card .dz-content a {
+    font-size: 18px !important;
+    font-family: var(--font-family-base);
+}
+
+.shop-card .dz-content {
+    height: 100px;
+    margin-top: 10px;
+}
+
+.quickview-image {
+    object-fit: cover;
+    border-radius: 20px !important;
+}
