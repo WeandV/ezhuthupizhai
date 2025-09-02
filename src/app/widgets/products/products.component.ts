@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ProductServiceTsService } from 'src/app/services/product.service.ts.service';
 import { CartService } from 'src/app/services/cart.service.ts.service';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 import { Product } from 'src/app/models/product.model';
 import { Subscription } from 'rxjs';
@@ -11,6 +12,7 @@ import { Subscription } from 'rxjs';
   styleUrls: ['./products.component.css']
 })
 export class ProductsComponent implements OnInit, OnDestroy {
+
   allProducts: Product[] = [];
   filteredProducts: Product[] = [];
   categories: string[] = [];
@@ -18,10 +20,13 @@ export class ProductsComponent implements OnInit, OnDestroy {
   quickViewQuantities: { [productId: number]: number } = {};
   private productsSubscription: Subscription | undefined;
   private categoriesSubscription: Subscription | undefined;
+  activeAccordionIndex: number = 0;
+  sortOrder: 'newest' | 'oldest' = 'newest';
 
   constructor(
     private productService: ProductServiceTsService,
     private cartService: CartService,
+    private sanitizer: DomSanitizer
   ) { }
 
   ngOnInit(): void {
@@ -32,14 +37,28 @@ export class ProductsComponent implements OnInit, OnDestroy {
   fetchProducts(): void {
     this.productsSubscription = this.productService.getProducts().subscribe({
       next: (products) => {
-        this.allProducts = products;
+        this.allProducts = products.map(product => {
+          try {
+            const parsed = typeof product.short_description === 'string'
+              ? JSON.parse(product.short_description)
+              : [];
+            product.accordion = parsed.map((section: any) => ({
+              title: section.title,
+              description: section.description
+            }));
+          } catch {
+            product.accordion = [];
+          }
+          return product;
+        });
+        this.sortProducts();
+
         this.filterProducts(this.activeFilter);
         this.allProducts.forEach(product => {
           this.quickViewQuantities[product.id] = 1;
         });
       },
       error: (err) => {
-        // Error handling for fetching products
       }
     });
   }
@@ -52,10 +71,26 @@ export class ProductsComponent implements OnInit, OnDestroy {
     });
   }
 
+  sortProducts(): void {
+    // Sort by product ID. Newer products typically have a higher ID.
+    if (this.sortOrder === 'newest') {
+      this.allProducts.sort((a, b) => b.id - a.id);
+    } else {
+      this.allProducts.sort((a, b) => a.id - b.id);
+    }
+  }
+
+  toggleSortOrder(): void {
+    this.sortOrder = this.sortOrder === 'newest' ? 'oldest' : 'newest';
+    this.sortProducts(); // Apply the new sort order
+    this.filterProducts(this.activeFilter); // Re-apply the filter to the sorted list
+  }
+
+
   filterProducts(category: string): void {
     this.activeFilter = category;
     let baseFilteredProducts = this.allProducts.filter(product =>
-      !product.categories.includes('byob') // <--- Changed 'byod' to 'byob' here
+      !product.categories.includes('byob')
     );
 
     if (category === 'ALL') {
@@ -67,6 +102,12 @@ export class ProductsComponent implements OnInit, OnDestroy {
     }
   }
 
+  toggleAccordion(index: number): void {
+    // This prevents closing the currently open item by not changing the index if it's the same
+    if (this.activeAccordionIndex !== index) {
+      this.activeAccordionIndex = index;
+    }
+  }
 
   getStarArray(rating: number): boolean[] {
     const stars = [];
@@ -139,4 +180,12 @@ export class ProductsComponent implements OnInit, OnDestroy {
       .replace(/^-+/, '')
       .replace(/-+$/, '');
   }
+
+  getSanitizedOffers(html: string | null): SafeHtml {
+    if (!html) {
+      return '';
+    }
+    return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
+
 }

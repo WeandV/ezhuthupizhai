@@ -184,7 +184,7 @@ button.bootstrap-touchspin-up {
     background-color: transparent;
 } */
 
-.pricingtable-wrapper.style-1{
+.pricingtable-wrapper.style-1 {
     border: none !important;
 }
 
@@ -241,7 +241,7 @@ button.bootstrap-touchspin-up {
 .coupon-available-section,
 .coupon-applied-section,
 .coupon-display-box {
-    background-color: #286b2c;
+    background-color: #142d15;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     padding: 5px;
@@ -389,7 +389,7 @@ button.bootstrap-touchspin-up {
     font-family: var(--font-family-title);
     color: black;
     font-weight: 700;
-    font-size: 20px;
+    font-size: 16px;
 }
 
 .site-filters.style-1 li.active {
@@ -421,4 +421,45 @@ button.bootstrap-touchspin-up {
     background-color: #d0e9f1;
     color: #000;
     border-color: #d0e9f1;
+}
+
+.dz-accordion.accordion-sm .accordion-header .accordion-button {
+    padding: 5px 10px;
+    font-weight: 500;
+}
+
+.dz-accordion.accordion-sm .accordion-header .accordion-button .toggle-close {
+    color: #fff;
+    height: 19px;
+    width: 19px;
+    line-height: 19px;
+}
+
+.fs-13 {
+    font-size: 13px !important;
+}
+
+@media only screen and (max-width: 575px) {
+    .site-filters.style-1 {
+        margin-bottom: 10px !important;
+    }
+
+    .mbl-price {
+        display: block !important;
+    }
+
+    .cart-detail .icon-bx-wraper.style-4 p {
+        display: block;
+    }
+
+    .product-box.style-2 {
+        height: 200px !important;
+    }
+    .fs-15{
+        font-size: 15px !important;
+    }
+}
+
+.about-style4 .side-content .about-thumb {
+    margin-top: -70px;
 }

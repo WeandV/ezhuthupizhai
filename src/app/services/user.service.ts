@@ -1,4 +1,3 @@
-// src/app/services/user.service.ts
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
@@ -38,6 +37,15 @@ export interface User {
   zip_code?: string;
   country?: string;
   token?: string;
+}
+
+export interface Order {
+  id: string;
+  date: Date;
+  status: string;
+  total: number;
+  order_status: string; // <-- CORRECTED: Changed from number to string
+  payment_method: string;
 }
 
 @Injectable({
@@ -103,6 +111,10 @@ export class UserService {
 
   getPendingOrders(userId: number): Observable<{ success: boolean, pendingOrders?: number, message?: string }> {
     return this.http.get<{ success: boolean, pendingOrders?: number, message?: string }>(`${environment.apiUrl}orders/pending/${userId}`);
+  }
+
+  getOrders(userId: number): Observable<{ success: boolean, orders: any[], message?: string }> {
+    return this.http.post<{ success: boolean, orders: any[], message?: string }>(`${environment.apiUrl}api/get_user_orders`, { userId });
   }
 
 }

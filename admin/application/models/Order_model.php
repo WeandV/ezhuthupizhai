@@ -60,21 +60,6 @@ class Order_model extends CI_Model
         }
         return [];
     }
-    public function get_pending_orders_by_user($user_id)
-    {
-        $this->db->where('user_id', $user_id);
-        $this->db->where_in('status', [
-            'pending',
-            'processing',
-            'on hold',
-            'confirmed',
-            'shipped',
-            'out for delivery',
-            'partially shipped'
-        ]);
-        return $this->db->count_all_results('orders');
-    }
-
     public function get_orders_by_user($user_id, $status = null)
     {
         $this->db->where('user_id', $user_id);
@@ -109,5 +94,75 @@ class Order_model extends CI_Model
         }
 
         return $order_details;
+    }
+
+    public function get_orders_by_user_with_items($userId)
+    {
+        $this->db->select('o.id, o.created_at, o.status, o.final_total, o.status, o.payment_method');
+        $this->db->from('orders o');
+        $this->db->where('o.user_id', $userId);
+        $this->db->order_by('o.created_at', 'DESC');
+        $query = $this->db->get();
+
+        $orders = $query->result_array();
+
+        // Fetch order items for each order
+        foreach ($orders as &$order) {
+            $this->db->select('product_name, quantity, price_at_order');
+            $this->db->where('order_id', $order['id']);
+            $item_query = $this->db->get('order_items');
+            $order['items'] = $item_query->result_array();
+        }
+
+        return $orders;
+    }
+
+    public function get_all_orders()
+    {
+        $this->db->select('id, first_name, last_name, payment_method, final_total, created_at, status');
+        $query = $this->db->get('orders');
+        return $query->result();
+    }
+
+    public function update_order_status($order_id, $new_status)
+    {
+        $this->db->set('status', $new_status);
+        $this->db->where('id', $order_id);
+        $this->db->update('orders');
+
+        // Check if the query affected any rows
+        return $this->db->affected_rows() > 0;
+    }
+
+    public function get_total_orders_by_user($userId)
+    {
+        $this->db->where('user_id', $userId);
+        return $this->db->count_all_results('orders');
+    }
+
+    public function get_pending_orders_by_user($user_id)
+    {
+        $this->db->where('user_id', $user_id);
+        // Based on your new data, only 'On Hold' is truly pending
+        $this->db->where_in('status', ['On Hold']);
+        return $this->db->count_all_results('orders');
+    }
+
+    public function get_dashboard_orders_for_user($user_id)
+    {
+        $this->db->select("
+        id,
+        created_at,
+        final_total,
+        status,
+        payment_method,
+        payment_status
+    ");
+        $this->db->from('orders');
+        $this->db->where('user_id', $user_id);
+        $this->db->order_by('created_at', 'DESC');
+
+        $query = $this->db->get();
+        return $query->result_array();
     }
 }

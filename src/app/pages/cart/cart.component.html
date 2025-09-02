@@ -26,8 +26,8 @@
                             <table class="table text-black">
                                 <thead>
                                     <tr>
-                                        <th>Product</th>
-                                        <th>Product Name</th>
+                                        <th>Image</th>
+                                        <th>Name</th>
                                         <th>Price</th>
                                         <th>Quantity</th>
                                         <th>Subtotal</th>
@@ -89,7 +89,7 @@
                             </table>
                         </div>
                         <div class="col-12">
-                            <div class=" bg-light rounded p-3 mb-4">
+                            <div class="bg-light rounded p-3 mb-4">
                                 <h5 class="mb-3">Available Coupons For You</h5>
                                 <div class="row">
                                     <ng-container
@@ -101,8 +101,7 @@
                                                         <div class="card coupon-card" [ngClass]="{
                                     'applied': cartService.isCouponActive(couponItem.coupon.coupon_code),
                                     'ineligible': !couponItem.isEligible
-                                }" [class.clickable]="couponItem.isEligible"
-                                                            [title]="!couponItem.isEligible ? 'This coupon is not eligible for your current cart.' : (cartService.isCouponActive(couponItem.coupon.coupon_code) ? 'Coupon already applied, click to remove' : 'Click to apply this coupon')">
+                                }" [title]="!couponItem.isEligible ? 'This coupon is not eligible for your current cart.' : ''">
                                                             <div class="main">
                                                                 <div class="co-img" style="width:30%;">
                                                                     <img src="assets/images/logo.png"
@@ -138,13 +137,14 @@
                                                                     type="text" readonly
                                                                     [value]="couponItem.coupon.coupon_code" />
                                                                 <button
-                                                                    (click)="onCouponCardClick(couponItem.coupon.coupon_code, couponItem.isEligible)"
-                                                                    class="copybtn" [disabled]="!couponItem.isEligible">
+                                                                    (click)="onApplyOrRemoveCoupon(couponItem.coupon.coupon_code, couponItem.isEligible)"
+                                                                    class="copybtn" [disabled]="!couponItem.isEligible"
+                                                                    [title]="couponItem.isEligible ? (cartService.isCouponActive(couponItem.coupon.coupon_code) ? 'Click to remove this coupon' : 'Click to apply this coupon') : 'This coupon is not eligible for your current cart.'">
                                                                     <ng-container
-                                                                        *ngIf="cartService.isCouponActive(couponItem.coupon.coupon_code); else applyCopyButton">
+                                                                        *ngIf="cartService.isCouponActive(couponItem.coupon.coupon_code); else applyButton">
                                                                         REMOVE
                                                                     </ng-container>
-                                                                    <ng-template #applyCopyButton>
+                                                                    <ng-template #applyButton>
                                                                         <ng-container
                                                                             *ngIf="couponItem.isEligible; else ineligibleButton">
                                                                             APPLY
@@ -154,19 +154,16 @@
                                                                         </ng-template>
                                                                     </ng-template>
                                                                 </button>
+                                                                <button class="copy-icon-btn"
+                                                                    (click)="onCopyCouponCode(couponItem.coupon.coupon_code)">
+                                                                    <i class="fa-regular fa-clipboard"></i>
+                                                                </button>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </ng-container>
                                         </ng-container>
-                                        <ng-template #noAvailableCoupons>
-                                            <div class="col-12">
-                                                <p class="text-muted mt-2">No special coupons available for you right
-                                                    now.
-                                                </p>
-                                            </div>
-                                        </ng-template>
                                     </ng-container>
                                     <ng-template #noAvailableCoupons>
                                         <div class="col-12">
@@ -216,8 +213,7 @@
                                                 date:'mediumDate' }}</p>
                                         </div>
                                         <div class="coupon-action">
-                                            <button type="button" class="btn remove-button"
-                                                (click)="onCouponCardClick(appliedCoupon.coupon_code, true)">
+<button type="button" class="btn remove-button" (click)="onApplyOrRemoveCoupon(appliedCoupon.coupon_code, true)">
                                                 <i class="fa-regular fa-trash-can fs-6 text-red"></i>
                                             </button>
                                         </div>

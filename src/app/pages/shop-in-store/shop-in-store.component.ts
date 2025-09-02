@@ -13,6 +13,8 @@ interface Vendor {
   pincode: string | null;
   phone: string;
   email: string;
+  flag: string;
+  country: string;
 }
 
 @Component({
@@ -64,8 +66,11 @@ export class ShopInStoreComponent implements OnInit {
     if (vendor.state) {
       addressParts.push(vendor.state);
     }
+    if (vendor.country) {
+      addressParts.push(vendor.country);
+    }
     if (vendor.pincode) {
-      addressParts.push(` - ${vendor.pincode}`);
+      addressParts.push(vendor.pincode);
     }
 
     // If the array is empty, it means all address parts were null

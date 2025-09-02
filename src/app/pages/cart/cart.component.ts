@@ -79,7 +79,7 @@ export class CartComponent implements OnInit, OnDestroy {
           return of([]);
         }
         const eligibilityChecks = coupons.map(coupon =>
-          this.cartService.isCouponEligible(coupon, cartTotal).pipe(
+          this.cartService.isCouponEligible(coupon).pipe(
             map(isEligible => ({ coupon, isEligible }))
           )
         );
@@ -127,34 +127,40 @@ export class CartComponent implements OnInit, OnDestroy {
     }
   }
 
-  async onCouponCardClick(couponCode: string, isEligible: boolean): Promise<void> {
+  // New method for applying or removing a coupon
+  onApplyOrRemoveCoupon(couponCode: string, isEligible: boolean): void {
     this.resetAlert();
-
     const isCurrentlyApplied = this.cartService.isCouponActive(couponCode);
 
     if (isCurrentlyApplied) {
       this.cartService.removeCoupon(couponCode);
       this.setAlert(`Coupon "${couponCode}" has been removed.`, 'warning');
     } else if (isEligible) {
-      try {
-        const inputElement = document.getElementById('couponCode_' + couponCode) as HTMLInputElement;
-        if (inputElement) {
-          await navigator.clipboard.writeText(inputElement.value);
-          this.setAlert(`Coupon "${couponCode}" copied to clipboard!`, 'success');
-        }
-
-        const result = this.cartService.applyCouponByCode(couponCode);
-        if (result.success) {
-          this.setAlert(result.message, 'success');
-        } else {
-          this.setAlert(result.message, 'danger');
-        }
-
-      } catch (err) {
-        this.setAlert('Failed to copy coupon code. Please copy manually.', 'danger');
+      const result = this.cartService.applyCouponByCode(couponCode);
+      if (result.success) {
+        this.setAlert(result.message, 'success');
+      } else {
+        this.setAlert(result.message, 'danger');
       }
     } else {
       this.setAlert('This coupon is not eligible for your current cart.', 'info');
+    }
+  }
+
+  // New method for copying the coupon code
+  onCopyCouponCode(couponCode: string): void {
+    const couponElement = document.getElementById('couponCode_' + couponCode) as HTMLInputElement;
+    if (couponElement) {
+        // Use a safe clipboard access method
+        try {
+            navigator.clipboard.writeText(couponCode);
+            this.setAlert(`Coupon code "${couponCode}" copied to clipboard!`, 'success');
+        } catch (err) {
+            this.setAlert('Failed to copy. Please copy manually.', 'danger');
+            console.error('Clipboard API write failed:', err);
+        }
+    } else {
+        this.setAlert('Failed to copy coupon code.', 'danger');
     }
   }
 
@@ -203,5 +209,4 @@ export class CartComponent implements OnInit, OnDestroy {
     this.alertMessage = '';
     this.alertType = 'danger';
   }
-
 }

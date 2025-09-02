@@ -1,8 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { UserService, User } from '../../services/user.service'; // Adjust path if needed
-import { Subscription } from 'rxjs';
-import { take } from 'rxjs/operators'; // Import take operator
+import { UserService, User, Order } from 'src/app/services/user.service';
+import { Subscription, forkJoin } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-dashboard',
@@ -11,9 +12,11 @@ import { take } from 'rxjs/operators'; // Import take operator
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   currentUser: User | null = null;
-  totalOrders: number = 0; // Property for total orders
-  pendingOrders: number = 0; // Property for pending orders
+  totalOrders: number = 0;
+  pendingOrders: number = 0;
+  orders: Order[] = [];
   private userSubscription: Subscription = new Subscription();
+  loading: boolean = true; // Start in loading state
 
   constructor(private router: Router, private userService: UserService) { }
 
@@ -22,61 +25,71 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.userService.currentUser$.subscribe(user => {
         this.currentUser = user;
         if (!user) {
+          // If no user is logged in, navigate to the login page
           this.router.navigate(['/login']);
         } else {
-          this.fetchOrderSummaries(user.id);
+          // If a user is logged in, fetch all dashboard data
+          this.loadDashboardData(user.id);
         }
       })
     );
   }
 
   /**
-   * 
-   * Fetches the total and pending order counts for the current user.
+   * Fetches all necessary data for the dashboard in parallel.
    * @param userId The ID of the logged-in user.
    */
-  fetchOrderSummaries(userId: number): void {
-    // Call UserService method to get total orders
-    this.userService.getTotalOrders(userId).pipe(take(1)).subscribe({
-      next: (response) => {
-        if (response.success && response.totalOrders !== undefined) {
-          this.totalOrders = response.totalOrders;
-        } else {
-          console.warn('Failed to fetch total orders:', response.message);
-          this.totalOrders = 0; // Default to 0 on failure
-        }
-      },
-      error: (error) => {
-        console.error('Error fetching total orders:', error);
-        this.totalOrders = 0; // Default to 0 on error
-      }
-    });
+  loadDashboardData(userId: number): void {
+    this.loading = true;
 
-    // Call UserService method to get pending orders
-    this.userService.getPendingOrders(userId).pipe(take(1)).subscribe({
-      next: (response) => {
-        if (response.success && response.pendingOrders !== undefined) {
-          this.pendingOrders = response.pendingOrders;
-        } else {
-          console.warn('Failed to fetch pending orders:', response.message);
-          this.pendingOrders = 0; // Default to 0 on failure
-        }
-      },
-      error: (error) => {
-        console.error('Error fetching pending orders:', error);
-        this.pendingOrders = 0; // Default to 0 on error
-      }
-    });
+    this.userSubscription.add(
+      forkJoin({
+        total: this.userService.getTotalOrders(userId),
+        pending: this.userService.getPendingOrders(userId),
+        orderList: this.userService.getOrders(userId)
+      })
+        .pipe(
+          // This will run when the forkJoin completes, either successfully or with an error.
+          finalize(() => this.loading = false)
+        )
+        .subscribe({
+          next: (responses) => {
+            if (responses.total.success) {
+              this.totalOrders = responses.total.totalOrders ?? 0;
+            }
+            if (responses.pending.success) {
+              this.pendingOrders = responses.pending.pendingOrders ?? 0;
+            }
+
+            console.log('API Response:', responses.orderList.orders); // Is this an array of 4?
+            if (responses.orderList.success) {
+              this.orders = responses.orderList.orders.map((order: any) => {
+                return {
+                  id: order.id,
+                  date: new Date(order.created_at),
+                  status: order.status,
+                  total: order.final_total,
+                  payment_method: order.payment_method,
+                  order_status: order.status
+                };
+              });
+            }
+          },
+          error: (error: HttpErrorResponse) => {
+            console.error('Error fetching dashboard data:', error);
+            // Optionally, show a toast notification or an error message to the user
+          }
+        })
+    );
   }
 
   onLogout(): void {
-    this.userService.clearUser(); // Use UserService to clear user state
-    // The subscription in ngOnInit will handle the navigation to /login
+    this.userService.clearUser();
   }
 
   ngOnDestroy(): void {
     if (this.userSubscription) {
-      this.userSubscription.unsubscribe(); // Unsubscribe to prevent memory leaks
+      this.userSubscription.unsubscribe();
     }
   }
 }

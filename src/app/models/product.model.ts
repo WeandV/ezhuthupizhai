@@ -1,24 +1,28 @@
 import { ProductImage } from './product-image.model';
-import { Review } from './review.model';
+import { ProductVideo } from './product-video.model';
 
 export interface Product {
   id: number;
   name: string;
-  short_description: string;
-  description: string; 
-  sku: string; 
+  tamil_name: string;
+  short_description?: any[];
+  accordion?: { title: string; description: string }[];
+  description: string;
+  sku: string;
   mrp_price: string;
   special_price: string;
-  thumbnail_image?: string; 
+  offers: string;
+  thumbnail_image?: string;
   categories: string[];
   tag: string;
   created_at?: string;
   updated_at?: string;
 
   images: ProductImage[];
-  reviews: Review[];
+
+  videos?: ProductVideo[]; 
   options?: { [key: string]: any };
 
   is_international: number;
-  
+
 }

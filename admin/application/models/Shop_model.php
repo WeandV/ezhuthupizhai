@@ -115,9 +115,8 @@ class Shop_model extends CI_Model
 
     public function get_videos_by_product_id($product_id)
     {
-        $this->db->where('product_id', $product_id);
-        $query = $this->db->get('product_video');
-        return $query->result();
+        $query = $this->db->get_where('product_video', ['product_id' => $product_id]);
+        return $query->result_array();
     }
 
     public function get_all_vendor()

@@ -3,11 +3,13 @@ import Swiper from 'swiper';
 import { Navigation, Pagination, Parallax } from 'swiper/modules';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/app/environments/environment';
+import { GalleryImage, GalleryService } from 'src/app/services/gallery.service';
 
 interface ProductVideo {
   id: number;
   product_id: number;
   video_url: string;
+  thumb_url: string;
 }
 interface Vendor {
   id: number;
@@ -20,6 +22,7 @@ interface Vendor {
   pincode: string;
   phone: string;
   email: string;
+  flag: string;
 }
 
 interface Gallery {
@@ -46,12 +49,42 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   gallery: Gallery[] = [];
   private galleryApiUrl = environment.apiUrl + 'api/get_all_images';
 
-  constructor(private http: HttpClient) { }
+  randomImages: GalleryImage[] = [];
+  loading: boolean = false;
+
+  constructor(private http: HttpClient, private galleryService: GalleryService) { }
 
   ngOnInit(): void {
     this.fetchVideos();
     this.fetchVendor();
     this.fetchGallery();
+    this.fetchRandomImages();
+  }
+
+  fetchRandomImages(): void {
+    this.loading = true;
+    this.galleryService.getGalleryImages('All').subscribe({
+      next: (data: any) => {
+        // Shuffle the array of images
+        const shuffledImages = this.shuffleArray(data.data);
+        // Take the first 12 images from the shuffled array
+        this.randomImages = shuffledImages.slice(0, 12);
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error fetching gallery images:', err);
+        this.loading = false;
+      }
+    });
+  }
+
+  // A utility function to shuffle an array
+  private shuffleArray(array: any[]): any[] {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
   }
 
   ngAfterViewInit(): void {

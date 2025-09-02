@@ -1,13 +1,11 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-// Gmail API OAuth2 Credentials
-$config['gmail_email']       = 'iloveadyar@gmail.com'; // Your Gmail email address
-$config['gmail_client_id']   = '1074648762010-sb6qn1gj163u9m7059is183v9k2nbvtf.apps.googleusercontent.com';
-$config['gmail_client_secret'] = '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';
-$config['gmail_refresh_token'] = '1//042IbyInj3FfmCgYIARAAGAQSNwF-L9Ir7uZfOlJci5ktWcdRzS8DvLMB4BvLIFw3_eQPqRMVqsfMm-LrjlR72IpToMPaUDyUwpQ';
+$config['gmail_email'] = 'ezhuthupizhaiofficial@gmail.com';
+$config['gmail_client_id'] = '1052103106113-qo2c17cjbm6h3hhm36rl4fstf94mepe2.apps.googleusercontent.com';
+$config['gmail_client_secret'] = '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';
+$config['gmail_refresh_token'] = '1//045vvH8TMHgEvCgYIARAAGAQSNwF-L9Irc2ZRHk_uWEPV86yqXw1_LGcjLuOW-lFem-REoNqjnlMPnDk1DDcYDQvWEyMot-b_4kw';
 
-// General Email Settings (these are mostly placeholders as direct API is used for sending)
 $config['protocol']    = 'smtp';
 $config['smtp_host']   = 'smtp.gmail.com';
 $config['smtp_port']   = 587;
@@ -17,11 +15,9 @@ $config['newline']     = "\r\n";
 $config['mailtype']    = 'html'; // Can be 'text' or 'html'
 $config['validation']  = TRUE;
 
-// Custom Email Templates and Sender Info
-$config['from_email'] = 'iloveadyar@gmail.com'; // IMPORTANT: This should be your authenticated Gmail API email
-$config['from_name']  = 'Ezhuthupizhai Support'; // Your application's name for emails
+$config['from_email'] = 'iloveadyar@gmail.com';
+$config['from_name']  = 'Ezhuthupizhai Support';
 
-// OTP Email Templates
 $config['otp_email_subject_template'] = 'Your {APP_NAME} OTP Code';
 $config['otp_email_body_template'] = '
     <p>Dear User,</p>

@@ -3,7 +3,6 @@ import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http
 import { Observable, of } from 'rxjs';
 import { Product } from '../models/product.model';
 import { map, catchError } from 'rxjs/operators';
-import { Review } from '../models/review.model';
 import { environment } from '../environments/environment';
 
 @Injectable({
@@ -23,6 +22,7 @@ export class ProductServiceTsService {
             ...product,
             mrp_price: product.mrp_price,
             special_price: product.special_price,
+            videos: product.videos || []
           })) as Product[];
         } else {
           return [];
@@ -51,12 +51,19 @@ export class ProductServiceTsService {
     return this.http.get<any>(`${this.apiUrl}api/product_detail/${productId}`).pipe(
       map(response => {
         if (response.status === 'success' && response.data) {
-          return response.data as Product;
+          return {
+            ...response.data,
+            videos: response.data.videos || []   // ✅ Map videos
+          } as Product;
         } else {
           return null;
         }
       })
     );
+  }
+
+    getVideosByProductId(productId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/api/products/${productId}/videos`);
   }
 
   submitInternationalOrder(orderData: any): Observable<any> {
@@ -82,29 +89,4 @@ export class ProductServiceTsService {
     return this.http.get<Product>(`${this.apiUrl}api/slug/${slug}`);
   }
 
-  submitProductReview(reviewData: { product_id: number; customer_name: string; rating: number; comment: string }): Observable<Review | null> {
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    });
-
-    return this.http.post<any>(`${this.apiUrl}review/create`, reviewData, { headers: headers, observe: 'response' }).pipe(
-      map(httpResponse => {
-        const responseBody = httpResponse.body;
-
-        if (httpResponse.status === 201) {
-          if (responseBody && responseBody.data) {
-            return responseBody.data as Review;
-          } else {
-            return null;
-          }
-        } else {
-          return null;
-        }
-      }),
-      catchError((error: HttpErrorResponse) => {
-        return of(null);
-      })
-    );
-  }
 }

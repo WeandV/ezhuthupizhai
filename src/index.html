@@ -24,15 +24,106 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Lekton:ital,wght@0,400;0,700;1,400&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
-    rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Meera+Inimai&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@100..900&display=swap" rel="stylesheet">
 
+  <style>
+    .loader-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 0.7s ease-in-out;
+    }
+
+    .loader {
+      width: fit-content;
+      font-size: 40px;
+      font-family: system-ui, sans-serif;
+      font-weight: bold;
+      text-transform: uppercase;
+      color: #0000;
+      -webkit-text-stroke: 1px #000;
+      background: linear-gradient(90deg, #0000 33%, #000 0 67%, #0000 0) 0/300% 100% no-repeat text;
+      animation: l2 2s linear infinite;
+    }
+
+    .loader:before {
+      content: "Loading";
+    }
+
+    @keyframes l2 {
+      0% {
+        background-position: 100%
+      }
+    }
+
+    .loader-hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+  </style>
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) {
+      w[l] = w[l] || []; w[l].push({
+        'gtm.start':
+          new Date().getTime(), event: 'gtm.js'
+      }); var f = d.getElementsByTagName(s)[0],
+        j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+          'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+    })(window, document, 'script', 'dataLayer', 'GTM-TCQB4XZT');</script>
+  <!-- End Google Tag Manager -->
+
+
+  <!-- Meta Pixel Code -->
+  <script>
+    !function (f, b, e, v, n, t, s) {
+      if (f.fbq) return; n = f.fbq = function () {
+        n.callMethod ?
+          n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+      };
+      if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
+      n.queue = []; t = b.createElement(e); t.async = !0;
+      t.src = v; s = b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t, s)
+    }(window, document, 'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '1114968746651250');
+    fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+      src="https://www.facebook.com/tr?id=1114968746651250&ev=PageView&noscript=1" /></noscript>
+  <!-- End Meta Pixel Code -->
 
 </head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-6Z1RL6QE55"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+
+
+  gtag('config', 'G-6Z1RL6QE55');
+</script>
 
 <body id="bg">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TCQB4XZT" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+
+
+  <div class="loader-container">
+    <div class="loader"></div>
+  </div>
+
   <div class="page-wraper">
     <app-root></app-root>
   </div>
@@ -62,7 +153,13 @@
   <script
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCsnuLzhOMeLMWhAoM8KawCxbChGVv5NqU&libraries=places&callback=initAutocomplete"
     async defer></script>
-
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+    window.addEventListener('load', () => {
+      const loaderContainer = document.querySelector('.loader-container');
+      loaderContainer.classList.add('loader-hidden');
+    });
+  </script>
 
 </body>
 

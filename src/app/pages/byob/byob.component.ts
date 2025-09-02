@@ -385,16 +385,17 @@ export class ByobComponent implements OnInit {
     const byobProduct: Product = {
       id: Date.now(), // Use a unique number as id
       name: byobBoxName,
-      short_description: 'A custom build-your-own-box.',
+      tamil_name: byobBoxName,
+      short_description: ['A custom -your-own-box.'],
       description: byobBoxDescription,
       mrp_price: boxMrpPrice,
       special_price: boxSpecialPrice,
+      offers: boxSpecialPrice,
       thumbnail_image: 'https://placehold.co/500?text=byob',
       categories: ['BYOB'],
       tag: 'custom_box',
       is_international: 0, 
       images: [],
-      reviews: [],
       options: {
         is_byob_box: true,
         byob_box_id: this.byobBoxId,

@@ -12,4 +12,6 @@ export interface AppliedCoupon {
   updated_at?: Date | string;
   logo_url?: string; // ADD THIS LINE
   company_name?: string; // ADD THIS LINEð
+  allowed_product_ids?: number[] | string | null; // <--- Add this
+
 }

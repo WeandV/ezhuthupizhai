@@ -1,0 +1,43 @@
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    color: #fff;
+}
+
+.status-badge.paid {
+    background-color: #28a745 !important; 
+}
+
+.status-badge.pending,
+.status-badge.pending_payment {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.status-badge.delivered {
+    background-color: #17a2b8;
+}
+
+.status-badge.processing {
+    background-color: #007bff;
+}
+
+.status-badge.shipped {
+    background-color: #6f42c1;
+}
+
+.status-badge.on-hold {
+    background-color: #fd7e14;
+}
+
+.status-badge.cancelled {
+    background-color: #dc3545;
+}
+
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}

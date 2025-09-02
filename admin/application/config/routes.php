@@ -24,6 +24,7 @@ $route['products/slug/(:any)'] = 'products/slug/$1';
 $route['api/products'] = 'api/products';
 $route['api/categories'] = 'api/categories';
 $route['api/product_detail/(:num)'] = 'api/product_detail/$1';
+$route['api/products/(:num)/videos'] = 'api/product_videos/$1';
 
 $route['api/coupons'] = 'api_controller/get_all_coupons';
 $route['api/coupons/(:any)'] = 'api_controller/get_coupon/$1';
@@ -45,3 +46,6 @@ $route['byob/add_to_cart'] = 'byob/add_to_cart';
 
 $route['orders/total/(:num)'] = 'orders/total/$1';
 $route['orders/pending/(:num)'] = 'orders/pending/$1';
+
+$route['checkout/create-order'] = 'checkout/create_order';
+$route['checkout/verify-payment'] = 'checkout/verify_payment';

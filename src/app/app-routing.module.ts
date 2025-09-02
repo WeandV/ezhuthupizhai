@@ -18,6 +18,8 @@ import { PrivacyPolicyComponent } from './terms-and-policies/privacy-policy/priv
 import { RefundPolicyComponent } from './terms-and-policies/refund-policy/refund-policy.component';
 import { ShippingAndDeliveryComponent } from './terms-and-policies/shipping-and-delivery/shipping-and-delivery.component';
 import { InternationalProductDetailComponent } from './pages/international-product-detail/international-product-detail.component';
+import { ContactComponent } from './pages/contact/contact.component';
+import { GalleryComponent } from './pages/gallery/gallery.component';
 
 const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
@@ -46,6 +48,8 @@ const routes: Routes = [
   { path: 'privacy-policy', component: PrivacyPolicyComponent },
   { path: 'shipping-and-delivery', component: ShippingAndDeliveryComponent },
   { path: 'refund-policy', component: RefundPolicyComponent },
+  { path: 'contact', component: ContactComponent },
+  { path: 'gallery', component: GalleryComponent}
 ];
 
 const routerOptions: ExtraOptions = {

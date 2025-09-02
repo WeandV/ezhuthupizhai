@@ -24,6 +24,7 @@
                 <div class="col-xl-7">
                     <div class="login m-b25" *ngIf="!otpVerified">
                         <h4 class="title m-b15">Login</h4>
+                        
                         <form [formGroup]="loginForm" class="row">
                             <div class="col-md-6">
                                 <div class="form-group m-b25">
@@ -42,6 +43,7 @@
                                     <button type="button" class="btn btn-sm btn-primary mt-2"
                                         (click)="verifyOtpAndFetchAddresses()"
                                         [disabled]="loginForm.get('otp')?.invalid || otpVerified">Verify OTP</button>
+                                        <p class="fs-13 text-red">If OTP is not received, please check your Spam or Junk folder.</p>
                                 </div>
                             </div>
                         </form>
@@ -188,7 +190,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-12 m-b25">
+                                <div class="col-md-12 m-b25" style="display: none;">
                                     <div class="form-group m-b5">
                                         <div class="custom-control custom-checkbox">
                                             <input type="checkbox" class="form-check-input" id="basic_checkbox_1"
@@ -261,8 +263,11 @@
                                             </div>
                                         </div>
                                     </h6>
-                                    <span class="price">&#8377;{{ parseFloat(item.product.special_price) |
-                                        number:'1.2-2' }} x {{ item.quantity }}</span>
+                                    <span class="price">
+                                        &#8377;{{ parseFloat(item.product.special_price) > 0 ?
+                                        parseFloat(item.product.special_price) : parseFloat(item.product.mrp_price) |
+                                        number:'1.2-2' }} x {{ item.quantity }}
+                                    </span>
                                 </div>
                             </div>
                         </ng-container>
@@ -311,33 +316,13 @@
                         </table>
                         <div class="accordion dz-accordion accordion-sm" id="accordionPaymentMethods">
                             <div class="accordion-item">
-                                <div class="accordion-header" id="headingCOD">
-                                    <div class="accordion-button collapsed custom-control custom-checkbox border-0"
-                                        data-bs-toggle="collapse" data-bs-target="#collapseCOD" role="navigation"
-                                        aria-expanded="true" aria-controls="collapseCOD">
-                                        <input class="form-check-input radio" type="radio" name="paymentOption"
-                                            id="flexRadioCOD" value="COD" [(ngModel)]="selectedPaymentMethod" checked />
-                                        <label class="form-check-label" for="flexRadioCOD">
-                                            Cash on delivery
-                                        </label>
-                                    </div>
-                                </div>
-                                <div id="collapseCOD" class="accordion-collapse collapse show"
-                                    aria-labelledby="headingCOD" data-bs-parent="#accordionPaymentMethods">
-                                    <div class="accordion-body">
-                                        <p class="m-b0">Pay with cash upon delivery. Please ensure you have the exact
-                                            amount ready.</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="accordion-item">
                                 <div class="accordion-header" id="headingRazorpay">
-                                    <div class="accordion-button collapsed custom-control custom-checkbox border-0"
+                                    <div class="accordion-button custom-control custom-checkbox border-0"
                                         data-bs-toggle="collapse" data-bs-target="#collapseRazorpay" role="navigation"
                                         aria-expanded="true" aria-controls="collapseRazorpay">
                                         <input class="form-check-input radio" type="radio" name="paymentOption"
-                                            id="flexRadioRazorpay" value="Razorpay"
-                                            [(ngModel)]="selectedPaymentMethod" />
+                                            id="flexRadioRazorpay" value="Razorpay" [(ngModel)]="selectedPaymentMethod"
+                                            checked />
                                         <label class="form-check-label" for="flexRadioRazorpay">
                                             Razorpay
                                         </label>
@@ -346,11 +331,31 @@
                                             alt="Razorpay | Payment Gateway | Neobank" />
                                     </div>
                                 </div>
-                                <div id="collapseRazorpay" class="accordion-collapse collapse"
+                                <div id="collapseRazorpay" class="accordion-collapse collapse show"
                                     aria-labelledby="headingRazorpay" data-bs-parent="#accordionPaymentMethods">
                                     <div class="accordion-body">
                                         <p class="m-b0">Pay securely online using credit/debit card, UPI, net banking,
                                             and more via Razorpay.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <div class="accordion-header" id="headingCOD">
+                                    <div class="accordion-button collapsed custom-control custom-checkbox border-0"
+                                        data-bs-toggle="collapse" data-bs-target="#collapseCOD" role="navigation"
+                                        aria-expanded="false" aria-controls="collapseCOD">
+                                        <input class="form-check-input radio" type="radio" name="paymentOption"
+                                            id="flexRadioCOD" value="COD" [(ngModel)]="selectedPaymentMethod" />
+                                        <label class="form-check-label" for="flexRadioCOD">
+                                            Cash on delivery
+                                        </label>
+                                    </div>
+                                </div>
+                                <div id="collapseCOD" class="accordion-collapse collapse" aria-labelledby="headingCOD"
+                                    data-bs-parent="#accordionPaymentMethods">
+                                    <div class="accordion-body">
+                                        <p class="m-b0">Pay with cash upon delivery. Please ensure you have the exact
+                                            amount ready.</p>
                                     </div>
                                 </div>
                             </div>

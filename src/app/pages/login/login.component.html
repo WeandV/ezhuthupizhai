@@ -1,23 +1,18 @@
-<div class="page-content bg-light">
+<div class="page-content ">
     <div class="row justify-content-center">
         <div class="col-xxl-6 col-xl-6 col-lg-6 pt-5 pb-5 justify-content-center">
-            <div class="login-area">
+            <div class="login-area bg-light">
                 <h2 class="text-secondary text-center">Login</h2>
                 <p class="text-center m-b25">Welcome, please login to your account</p>
-
-                <!-- General API response message (e.g., "Login successful!", "Invalid credentials") -->
                 <div *ngIf="message" class="mt-3 text-center"
                     [ngClass]="{'text-success': isSuccess, 'text-danger': !isSuccess}">
                     {{ message }}
                 </div>
-
-                <!-- Password-based Login Form -->
                 <form *ngIf="loginMode === 'password'" (ngSubmit)="onLogin()">
                     <div class="m-b30">
                         <label class="label-title">Email Address</label>
                         <input name="email" required class="form-control" placeholder="Email Address" type="email"
                             [(ngModel)]="user.email" #emailInput="ngModel">
-                        <!-- Email validation messages -->
                         <div *ngIf="emailInput.invalid && (emailInput.dirty || emailInput.touched)"
                             class="text-danger mt-1">
                             <div *ngIf="emailInput.errors?.['required']">
@@ -28,7 +23,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="m-b15">
                         <label class="label-title">Password</label>
                         <div class="secure-input">
@@ -39,7 +33,6 @@
                                     [ngClass]="{'fa-eye': !passwordVisible, 'fa-eye-slash': passwordVisible}"></i>
                             </div>
                         </div>
-                        <!-- Password validation messages -->
                         <div *ngIf="passwordInput.invalid && (passwordInput.dirty || passwordInput.touched)"
                             class="text-danger mt-1">
                             <div *ngIf="passwordInput.errors?.['required']">
@@ -47,15 +40,11 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="form-row d-flex justify-content-between m-b30">
                         <div class="form-group">
-                            <!-- Changed to (click) for internal component state change -->
-                            <a class="text-primary" (click)="changeLoginMode('otp')">Login with OTP</a>
+                            <a href="javascript:void(0)" class="text-primary" (click)="changeLoginMode('otp')">Login with OTP</a>
                         </div>
-
                         <div class="form-group">
-                            <!-- Changed to href for full page refresh -->
                             <a class="text-primary" href="/forgot-password">Forgot Password</a>
                         </div>
                     </div>
@@ -78,7 +67,6 @@
                                     type="email" [(ngModel)]="otpEmail">
                             </div>
                             <div class="d-flex justify-content-between">
-                                <!-- Changed to (click) for internal component state change -->
                                 <a class="btn btn-outline-secondary btnhover text-uppercase"
                                     (click)="changeLoginMode('password')">Back to Password Login</a>
                                 <button type="submit" class="btn btn-secondary btnhover text-uppercase submit-btn"

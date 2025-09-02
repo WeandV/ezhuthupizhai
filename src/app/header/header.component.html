@@ -30,7 +30,7 @@
                             </a>
                         </li>
                         <li class="has-mega-menu sub-menu-down auto-width menu-left">
-                            <a href="byob"> <span>BYOB</span>
+                            <a href="gallery"> <span>Gallery</span>
                                 <i class="fas fa-chevron-down tabindex"></i>
                             </a>
                         </li>
@@ -40,10 +40,20 @@
                             </a>
                         </li>
                         <li class="has-mega-menu sub-menu-down auto-width menu-left">
-                            <a href="international-orders"> <span>For International Orders</span>
+                            <a href="contact"> <span>Contact</span>
                                 <i class="fas fa-chevron-down tabindex"></i>
                             </a>
                         </li>
+                        <!-- <li class="has-mega-menu sub-menu-down auto-width menu-left">
+                            <a href="international-orders"> <span>For International Orders</span>
+                                <i class="fas fa-chevron-down tabindex"></i>
+                            </a>
+                        </li> -->
+                        <!-- <li class="has-mega-menu sub-menu-down auto-width menu-left">
+                            <a href="byob"> <span>BYOB</span>
+                                <i class="fas fa-chevron-down tabindex"></i>
+                            </a>
+                        </li> -->
                     </ul>
                 </div>
                 <div class="extra-nav">
@@ -56,9 +66,15 @@
                                 </a>
                             </li>
                             <li class="nav-item" *ngIf="isLoggedIn">
-                                <a class="nav-link" (click)="onLogout()">
+                                <a href="" class="nav-link" (click)="onLogout()">
                                     <i class="fa-solid fa-right-from-bracket pe-1" style="font-size: 15px;"></i>
                                     Logout
+                                </a>
+                            </li>
+                            <li class="nav-item" *ngIf="isLoggedIn">
+                                <a href="dashboard" class="nav-link">
+                                    <i class="fa-solid fa-bars pe-1" style="font-size: 15px;"></i>
+                                    Dashboard
                                 </a>
                             </li>
                             <li class="nav-item cart-link">

@@ -23,7 +23,8 @@ class Customer extends CI_Controller
             exit();
         }
     }
-
+    
+    
     public function details($user_id)
     {
         $user_details = $this->User_model->get_user_details_by_id($user_id);

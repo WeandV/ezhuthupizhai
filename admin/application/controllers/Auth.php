@@ -168,28 +168,25 @@ class Auth extends CI_Controller
                     log_message('error', 'VERIFY_OTP_AND_GET_ADDRESSES: Failed to mark OTP as used for ID: ' . $otp_record['id']);
                 }
 
-                $user = null;
+                // Check if a user with this email already exists
+                $user = $this->User_model->get_user_by_email($email);
+
                 $user_id = null;
                 $addresses = [];
+                $message_suffix = '';
 
                 if ($user) {
-                    $user_id = $user['id'];
+                    // User exists, get their details
+                    $user_id = $user->id;
                     $addresses = $this->User_model->get_user_addresses($user_id);
+                    $message_suffix = ' Account found.';
                 } else {
-                    $new_user_id = $this->User_model->create_user_if_not_exists($email);
-                    if ($new_user_id) {
-                        $user_id = $new_user_id;
-                        $response_data['message'] = 'OTP verified. New user account created.';
-                    } else {
-                        log_message('error', 'Failed to create new user account after OTP verification for email: ' . $email);
-                        $response_data['message'] = 'OTP verified, but failed to process user account.';
-                        $http_status = 500;
-                        goto send_response;
-                    }
+                    // No user exists yet. The account will be created later.
+                    $message_suffix = ' New user account will be created upon first order.';
                 }
 
                 $response_data['success'] = true;
-                $response_data['message'] = $response_data['message'] ?: 'OTP verified successfully!';
+                $response_data['message'] = 'OTP verified successfully!' . $message_suffix;
                 $response_data['user_id'] = $user_id;
                 $response_data['email'] = $email;
                 $response_data['phone'] = $otp_record['phone'];
@@ -197,9 +194,8 @@ class Auth extends CI_Controller
                 $http_status = 200;
             }
         }
-        log_message('debug', 'VERIFY_OTP_AND_GET_ADDRESSES: Received email: ' . $email . ', OTP: ' . $entered_otp);
 
-        send_response:
+        log_message('debug', 'VERIFY_OTP_AND_GET_ADDRESSES: Received email: ' . $email . ', OTP: ' . $entered_otp);
         $this->output->set_status_header($http_status)->set_output(json_encode($response_data));
     }
 

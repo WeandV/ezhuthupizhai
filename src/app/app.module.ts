@@ -25,6 +25,8 @@ import { ShippingAndDeliveryComponent } from './terms-and-policies/shipping-and-
 import { RefundPolicyComponent } from './terms-and-policies/refund-policy/refund-policy.component';
 import { NgxMasonryModule } from 'ngx-masonry';
 import { InternationalProductDetailComponent } from './pages/international-product-detail/international-product-detail.component';
+import { ContactComponent } from './pages/contact/contact.component';
+import { GalleryComponent } from './pages/gallery/gallery.component';
 
 @NgModule({
   declarations: [
@@ -49,6 +51,8 @@ import { InternationalProductDetailComponent } from './pages/international-produ
     ShippingAndDeliveryComponent,
     RefundPolicyComponent,
     InternationalProductDetailComponent,
+    ContactComponent,
+    GalleryComponent,
   ],
   imports: [
     BrowserModule,

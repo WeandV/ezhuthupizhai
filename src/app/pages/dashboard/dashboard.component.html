@@ -16,42 +16,29 @@
         <div class="container">
             <div class="row">
                 <aside class="col-xl-3">
-                    <div class="toggle-info">
-                        <h5 class="title mb-0">Account Navbar</h5>
-                        <a class="toggle-btn" href="#accountSidebar">Account Menu</a>
-                    </div>
                     <div class="sticky-top account-sidebar-wrapper">
                         <div class="account-sidebar" id="accountSidebar">
                             <div class="profile-head">
                                 <div class="user-thumb">
-                                    <!-- Dynamic user avatar based on first name and last name -->
                                     <img class="rounded-circle"
                                         [src]="'https://ui-avatars.com/api/?name=' + (currentUser?.first_name || currentUser?.email) + '&size=250&background=random'"
                                         alt="User Avatar">
                                 </div>
-                                <!-- Dynamic user name and email -->
-                                <h5 class="title mb-0">{{ currentUser?.first_name }}</h5>
+                                <h5 class="title mb-0">{{ currentUser?.first_name || 'Guest' }}</h5>
                                 <span class="text text-primary">{{ currentUser?.email || 'N/A' }}</span>
                             </div>
                             <div class="account-nav">
                                 <div class="nav-title bg-light">DASHBOARD</div>
                                 <ul>
-                                    <li><a routerLink="/dashboard">Dashboard</a></li>
                                     <li><a routerLink="/dashboard/orders">Orders</a></li>
-                                </ul>
-                                <div class="nav-title bg-light">ACCOUNT SETTINGS</div>
-                                <ul class="account-info-list">
-                                    <li><a routerLink="/dashboard/profile">Profile</a></li>
-                                    <li><a routerLink="/dashboard/addresses">Address</a></li>
                                 </ul>
                             </div>
                         </div>
                     </div>
                 </aside>
                 <section class="col-xl-9 account-wrapper">
-                    <div class="account-card">
+                    <div class="account-card mb-3">
                         <div class="m-b30">
-                            <!-- Dynamic greeting and logout link -->
                             <p>Hello <strong class="text-black">{{ currentUser?.first_name }}</strong> (not <strong
                                     class="text-black">{{ currentUser?.first_name }}</strong>?
                                 <a (click)="onLogout()" class="text-underline" style="cursor: pointer;">Log out</a>)
@@ -76,7 +63,7 @@
                                     </div>
                                     <div class="total-detail">
                                         <span class="text">Total Order</span>
-                                        <h2 class="title">{{ totalOrders }}</h2> <!-- Dynamic Total Orders -->
+                                        <h2 class="title">{{ totalOrders }}</h2>
                                     </div>
                                 </div>
                             </div>
@@ -92,10 +79,54 @@
                                     </div>
                                     <div class="total-detail">
                                         <span class="text">Total Pending Order</span>
-                                        <h2 class="title">{{ pendingOrders }}</h2> <!-- Dynamic Pending Orders -->
+                                        <h2 class="title">{{ pendingOrders }}</h2>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                    <div class="account-card">
+                        <div class="d-flex align-items-center justify-content-between mb-4">
+                            <h4 class="mb-0">Recent Orders</h4>
+                        </div>
+                        <div class="order-table table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Date</th>
+                                        <th>Payment Method</th>
+                                        <th>Total</th>
+                                        <th>Order Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngIf="orders.length === 0">
+                                        <td colspan="5" class="text-center">No orders found.</td>
+                                    </tr>
+                                    <tr *ngFor="let order of orders">
+                                        <td data-label="Order ID">{{ order.id }}</td>
+                                        <td data-label="Date">{{ order.date | date: 'mediumDate' }}</td>
+                                        <td data-label="Payment Method">
+                                            <span class="status-badge"
+                                                [class.paid]="order.payment_method === 'Razorpay(Paid)'"
+                                                [class.pending_payment]="order.payment_method === 'COD(Not Paid)'">
+                                                {{ order.payment_method }}
+                                            </span>
+                                        </td>
+                                        <td data-label="Total">₹{{ order.total | number: '1.2-2' }}</td>
+                                        <td data-label="Actions">
+                                            <span class="status-badge"
+                                                [class.processing]="order.order_status.toString() === 'Processing'"
+                                                [class.shipped]="order.order_status.toString() === 'Shipped'"
+                                                [class.delivered]="order.order_status.toString() === 'Delivered'"
+                                                [class.cancelled]="order.order_status.toString() === 'Cancelled'"
+                                                [class.on-hold]="order.order_status.toString() === 'On Hold'">{{
+                                                order.order_status }}</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </section>

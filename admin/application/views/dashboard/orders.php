@@ -29,11 +29,12 @@
                                 <tr>
                                     <th>id</th>
                                     <th>Name</th>
-                                    <th>Status</th>
+                                    <!-- <th>Status</th> -->
                                     <th>Payment Method</th>
                                     <th>Amount</th>
                                     <th>Date</th>
-                                    <th>Status</th>
+                                    <th>Order Status</th>
+                                    <th>Order Details</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -42,41 +43,45 @@
                                         <tr>
                                             <td><?= $order->id; ?></td>
                                             <td class="text-capitalize"><?= $order->first_name . ' ' . $order->last_name; ?></td>
-                                            <td>
-                                                <?php
-                                                $badge_class = '';
-                                                switch ($order->status) {
-                                                    case 'paid':
-                                                    case 'Paid':
-                                                    case 'completed':
-                                                        $badge_class = 'bg-light-success text-success';
-                                                        break;
-                                                    case 'delivered':
-                                                    case 'Delivered':
-                                                        $badge_class = 'bg-light-info text-info';
-                                                        break;
-                                                    case 'pending':
-                                                    case 'pending_payment':
-                                                        $badge_class = 'bg-light-warning text-warning';
-                                                        break;
-                                                    default:
-                                                        $badge_class = 'bg-light-secondary text-secondary';
-                                                        break;
-                                                }
-                                                ?>
-                                                <span class="badge <?= $badge_class; ?>"><?= $order->status; ?></span>
-                                            </td>
                                             <td><?= $order->payment_method; ?></td>
                                             <td>&#8377; <?= number_format($order->final_total, 2); ?></td>
                                             <td><?= date('d M Y', strtotime($order->created_at)); ?></td>
-                                            <td>
+                                            <td style="width: 15%;">
                                                 <div class="dropdown">
-                                                    <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Actions</button>
+                                                    <?php
+                                                    $badge_class = 'bg-light-secondary text-secondary'; // Default badge
+                                                    switch ($order->status) {
+                                                        case 'Processing':
+                                                            $badge_class = 'bg-light-primary text-primary';
+                                                            break;
+                                                        case 'Shipped':
+                                                            $badge_class = 'bg-light-info text-info';
+                                                            break;
+                                                        case 'Delivered':
+                                                            $badge_class = 'bg-light-success text-success';
+                                                            break;
+                                                        case 'Cancelled':
+                                                            $badge_class = 'bg-light-danger text-danger';
+                                                            break;
+                                                        case 'On Hold':
+                                                            $badge_class = 'bg-light-warning text-warning';
+                                                            break;
+                                                    }
+                                                    ?>
+                                                    <button class="btn <?= $badge_class; ?> dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <?= $order->status; ?>
+                                                    </button>
                                                     <ul class="dropdown-menu">
-                                                        <li><a class="dropdown-item" href="<?= site_url('orders/details/' . $order->id); ?>">View Details</a></li>
-                                                        <li><a class="dropdown-item" href="#">Update Status</a></li>
+                                                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="updateOrderStatus(<?= $order->id; ?>, 'Processing')">Processing</a></li>
+                                                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="updateOrderStatus(<?= $order->id; ?>, 'Shipped')">Shipped</a></li>
+                                                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="updateOrderStatus(<?= $order->id; ?>, 'Delivered')">Delivered</a></li>
+                                                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="updateOrderStatus(<?= $order->id; ?>, 'Cancelled')">Cancelled</a></li>
+                                                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="updateOrderStatus(<?= $order->id; ?>, 'On Hold')">On Hold</a></li>
                                                     </ul>
                                                 </div>
+                                            </td>
+                                            <td class="text-center text-primary">
+                                                <i class="fa-solid fa-eye fs-5"></i>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
@@ -93,3 +98,58 @@
         </div>
     </div>
 </div>
+<script>
+    /**
+     * Sends an AJAX request to update the order status.
+     * @param {number} orderId The ID of the order to update.
+     * @param {string} newStatus The new status to set for the order.
+     */
+    function updateOrderStatus(orderId, newStatus) {
+        if (!confirm('Are you sure you want to change the order status to ' + newStatus + '?')) {
+            return; // Exit if the user cancels
+        }
+
+        const url = "<?= base_url('dashboard/update_order_status'); ?>";
+
+        // Use the Fetch API to send the request
+        fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // Optional: Add a custom header to identify the AJAX request
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    order_id: orderId,
+                    order_status: newStatus
+                }),
+            })
+            .then(response => {
+                // Check if the response is OK (status code 200-299)
+                if (!response.ok) {
+                    // Throw an error to be caught by the .catch() block
+                    return response.json().then(error => {
+                        throw new Error(error.message || 'Something went wrong.');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                // The request was successful
+                if (data.success) {
+                    // You can display a success message
+                    console.log(data.message);
+                    // Reload the page to show the updated status
+                    window.location.reload();
+                } else {
+                    // This block handles a successful request with a failed operation
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                // This block handles network errors or errors thrown in the .then() block
+                console.error('AJAX Error:', error);
+                alert('An error occurred during the update: ' + error.message);
+            });
+    }
+</script>

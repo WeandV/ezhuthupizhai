@@ -100,13 +100,13 @@ class User_model extends CI_Model
                 return false;
             }
         }
-        
+
         $data['updated_at'] = date('Y-m-d H:i:s');
         $this->db->where('id', $user_id);
-        
+
         // This is the key change: ensure we check the result of the update query
         $result = $this->db->update('users', $data);
-        
+
         if ($result === FALSE) {
             log_message('error', 'Database Error updating user ID ' . $user_id . ': ' . $this->db->error()['message']);
             return false;
@@ -125,14 +125,6 @@ class User_model extends CI_Model
             return $this->db->insert_id();
         }
         return FALSE;
-    }
-
-    public function update_user_address($address_id, $user_id, $data)
-    {
-        $data['updated_at'] = date('Y-m-d H:i:s');
-        $this->db->where('id', $address_id);
-        $this->db->where('user_id', $user_id);
-        return $this->db->update('user_addresses', $data);
     }
 
     public function get_user_addresses($user_id)
@@ -249,5 +241,18 @@ class User_model extends CI_Model
         }
 
         return $orders;
+    }
+
+    public function get_user_details_by_id($user_id)
+    {        $this->db->select('id, first_name, last_name, email, phone, password');
+        $this->db->from('users');
+        $this->db->where('id', $user_id);
+
+        $query = $this->db->get();
+        if ($query->num_rows() > 0) {
+            return $query->row_array();
+        } else {
+            return false;
+        }
     }
 }

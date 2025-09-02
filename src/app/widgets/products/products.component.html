@@ -1,6 +1,6 @@
 <section class="content-inner">
     <div class="container">
-        <div class="row justify-content-md-between align-items-start mb-5">
+        <div class="row justify-content-md-between align-items-start mb-1">
             <div class="col-lg-5 col-md-12">
                 <div class="section-head style-1 m-b30">
                     <div class="left-content">
@@ -22,14 +22,14 @@
         </div>
         <div class="clearfix">
             <div class="row g-xl-4 g-3">
-                <div class="card-container col-6 col-xl-4 col-lg-4 col-md-4 col-sm-6"
+                <div class="card-container col-12 col-xl-4 col-lg-4 col-md-4 col-sm-6"
                     *ngFor="let product of filteredProducts">
                     <div class="shop-card">
                         <a [routerLink]="['/products', slugify(product.name)]" target="_top">
                             <div class="dz-media">
                                 <img [src]="product.thumbnail_image" [alt]="product.name">
                                 <div class="shop-meta">
-                                    <a href="javascript:void(0);" class="btn btn-secondary btn-md btn-rounded"
+                                    <a href="javascript:void(0);" class="btn btn-secondary btn-md btn-rounded d-none d-xl-block"
                                         data-bs-toggle="modal" [attr.data-bs-target]="'#quickViewModal_' + product.id">
                                         <i class="fa-solid fa-eye d-md-none d-block"></i>
                                         <span class="d-md-block d-none">Quick View</span>
@@ -40,9 +40,24 @@
                         <div class="dz-info">
                             <div class="dz-content">
                                 <a [routerLink]="['/products', slugify(product.name)]" target="_top"
-                                    class="title w-100 fs-18 text-black">
-                                    {{ product.name }}
+                                    class="title w-100 fs-5 mb-1 text-black tamil">
+                                    {{ product.tamil_name }} <br><span class="fs-13">({{product.name}})</span>
                                 </a>
+                            </div>
+                            <div *ngIf="product.offers" class="bg-black pt-1 pb-1" style="border-radius: 10px;">
+                                <div class="d-flex justify-content-between text-white"
+                                    style="padding: 0px 20px !important;">
+                                    <p class="mb-1 fs-13">Offers and Discounts.</p>
+                                    <p class="mb-1 fs-13">Powered by Ezhuthupizhai.</p>
+                                </div>
+                                <div class="icon-bx-wraper style-4 p-1 m-b1 bg-white p-1 ms-1 me-1"
+                                    style="border-radius: 10px;">
+                                    <div class="icon-content m-0 p-1 w-100">
+                                        <h6 class="dz-title fs-6 mb-0 fw-bold text-center"
+                                            [innerHTML]="getSanitizedOffers(product.offers)">
+                                        </h6>
+                                    </div>
+                                </div>
                             </div>
                             <div class="meta-content">
                                 <span class="price">
@@ -60,8 +75,7 @@
                             <div class="add-cart-button">
                                 <button type="button" class="btn btn-white btn-sm btn-icon btn-border"
                                     (click)="onAddToCart(product)">
-                                    <i class="icon feather icon-shopping-cart"></i>
-                                    <span class="d-md-block d-none">Add to cart</span>
+                                    <span class="">Add to cart</span>
                                 </button>
                             </div>
                         </div>
@@ -79,14 +93,13 @@
                                 </button>
                                 <div class="modal-body">
                                     <div class="container">
-                                        <div class="row align-items-center justify-content-center h-100 bg-light">
-                                            <div
-                                                class="col-xl-6 col-md-6 p-2 d-flex align-items-center justify-content-center">
+                                        <div class="row align-items-center h-100 bg-light">
+                                            <div class="col-xl-6 col-md-6 p-2 d-flex align-items-center">
                                                 <img [src]="product.thumbnail_image || 'https://placehold.co/500x500'"
                                                     [alt]="product.name" class="w-100 h-100 quickview-image">
                                             </div>
-                                            <div
-                                                class="col-xl-6 col-md-6 px-0 mt-0 bg-light d-flex align-items-center justify-content-center" style="min-height: 500px;">
+                                            <div class="col-xl-6 col-md-6 px-0 mt-0 bg-light d-flex align-items-center"
+                                                style="min-height: 500px;">
                                                 <div
                                                     class="dz-product-detail style-2 p-4 mb-0 h-100 align-content-center">
                                                     <div class="dz-content">
@@ -96,41 +109,76 @@
                                                                     *ngIf="product.tag && product.tag.trim().length > 0">
                                                                     {{ product.tag | uppercase }}
                                                                 </span>
-                                                                <h4 class="title mb-1 fs-2">{{product.name }}</h4>
+                                                                <h4 class="title mb-4 fs-5 tamil">{{product.tamil_name
+                                                                    }}</h4>
                                                             </div>
                                                         </div>
-                                                        <p class="para-text" [innerHTML]="product.short_description">
-                                                        </p>
+                                                        <div class="accordion dz-accordion accordion-sm mb-2"
+                                                            data-wow-delay="0.3s" id="accordionFaq">
+                                                            <div class="accordion-item"
+                                                                *ngFor="let acc of product.accordion; let i = index">
+                                                                <h2 class="accordion-header" [id]="'heading' + i">
+                                                                    <a href="javascript:void(0);"
+                                                                        class="accordion-button"
+                                                                        [class.collapsed]="activeAccordionIndex !== i"
+                                                                        (click)="toggleAccordion(i)"
+                                                                        [attr.aria-controls]="'collapse' + i"
+                                                                        [attr.aria-expanded]="activeAccordionIndex === i ? 'true' : 'false'">
+                                                                        {{ acc.title }}
+                                                                        <span class="toggle-close"></span>
+                                                                    </a>
+                                                                </h2>
+                                                                <div [id]="'collapse' + i"
+                                                                    class="accordion-collapse collapse"
+                                                                    [ngClass]="{ 'show': activeAccordionIndex === i }"
+                                                                    [attr.aria-labelledby]="'heading' + i"
+                                                                    data-bs-parent="#accordionFaq">
+                                                                    <div class="accordion-body p-0 pt-2">
+                                                                        <p class="m-b0">{{ acc.description }}</p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                         <div class="row dz-info mb-1 mt-1 p-1 ">
                                                             <div class="col-md-4">
-                                                                <p class="text-black fs-5 fw-bold mb-1">
+                                                                <p class="text-black fs-4 fw-bold mb-1 ">
                                                                     SKU
                                                                 </p>
-                                                                <p class="mb-0 fs-6">{{product.sku}} </p>
+                                                                <p class="mb-0 fs-6 noto-sans-tamil">{{product.sku}}
+                                                                </p>
                                                             </div>
                                                             <div class="col-md-4">
-                                                                <p class="text-black fs-5 fw-bold mb-1">
+                                                                <p class="text-black fs-4 fw-bold mb-1 ">
                                                                     Category
                                                                 </p>
-                                                                <p class="mb-0 fs-6"> {{product.categories}} </p>
+                                                                <p class="mb-0 fs-6 noto-sans-tamil">
+                                                                    {{product.categories}} </p>
                                                             </div>
-                                                            <div class="col-md-4">
-                                                                <p class="text-black fs-5 fw-bold mb-1">
+                                                            <div class="col-md-4"
+                                                                *ngIf="product.tag && product.tag.trim().length > 0">
+                                                                <p class="text-black fs-4 fw-bold mb-1 ">
                                                                     Offer
                                                                 </p>
-                                                                <p class="mb-0 fs-6"> {{product.tag}} </p>
+                                                                <p class="mb-0 fs-6 noto-sans-tamil"> {{product.tag}}
+                                                                </p>
                                                             </div>
                                                         </div>
                                                         <div
                                                             class="meta-content m-b20 d-flex align-items-end justify-content-between">
                                                             <div class="me-3">
-                                                                <span class="form-label">Price</span>
-                                                                <span class="price">
-                                                                    &#8377;{{ product.special_price }}
-                                                                    <del
-                                                                        *ngIf="product.mrp_price !== product.special_price">&#8377;{{
-                                                                        product.mrp_price }}</del>
-                                                                </span>
+                                                                <span class="form-label fs-4 mb-0">Price</span>
+                                                                <p class="fs-3 mb-0">
+                                                                    <ng-container
+                                                                        *ngIf="product.special_price !== null && product.special_price !== undefined && +product.special_price > 0; else mrpPriceBlock">
+                                                                        &#8377;{{ product.special_price }}
+                                                                        <del class="text-red fs-4"
+                                                                            *ngIf="product.mrp_price !== product.special_price">&#8377;
+                                                                            {{product.mrp_price}}</del>
+                                                                    </ng-container>
+                                                                    <ng-template #mrpPriceBlock>
+                                                                        &#8377;{{ product.mrp_price }}
+                                                                    </ng-template>
+                                                                </p>
                                                             </div>
                                                             <div class="btn-quantity light me-0">
                                                                 <label class="form-label">Quantity</label>
@@ -164,21 +212,23 @@
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div class="icon-bx-wraper style-4 p-1 m-b10">
-                                                            <div class="icon-bx">
-                                                                <img src="assets/images/info.png" style="width: 40px;"
-                                                                    alt="/">
+                                                        <div *ngIf="product.offers" class="bg-black pt-1 pb-1"
+                                                            style="border-radius: 10px;">
+                                                            <div class="d-flex justify-content-between text-white"
+                                                                style="padding: 0px 20px !important;">
+                                                                <p class="mb-1">Offers and Discounts.</p>
+                                                                <p class="mb-1">Powered by Ezhuthupizhai.</p>
                                                             </div>
-                                                            <div class="icon-content">
-                                                                <h6 class="dz-title text-red mb-0 fs-6 fw-bold">
-                                                                    Important
-                                                                    Notice</h6>
-                                                                <p class="mb-0 text-gray" style="font-size: 13px;">
-                                                                    Delivery may be delayed on weekends or peak times.
-                                                                    Contact support for any queries.
-                                                                </p>
+                                                            <div class="icon-bx-wraper style-4 p-1 m-b1 bg-white p-1 ms-1 me-1"
+                                                                style="border-radius: 10px;">
+                                                                <div class="icon-content m-0 p-1 w-100">
+                                                                    <h6 class="dz-title fs-3 mb-0 fw-bold text-center"
+                                                                        [innerHTML]="getSanitizedOffers(product.offers)">
+                                                                    </h6>
+                                                                </div>
                                                             </div>
                                                         </div>
+
                                                         <div class="cart-btn">
                                                             <button type="button"
                                                                 class="btn btn-secondary btn-sm text-uppercase"

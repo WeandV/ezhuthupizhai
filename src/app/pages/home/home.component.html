@@ -85,28 +85,26 @@
         </div>
     </section>
 
-
-    <!-- about section -->
-    <section class="about-style4" style="background-color: #d0e9f1;">
+    <section class="about-style4 overflow-hidden" style="background-color: #d0e9f1;">
         <div class="container">
             <div class="row align-items-center">
-                <div class="col-lg-6 pt-5 pb-5 aos-item wow fadeInUp" data-wow-delay="0.3s">
+                <div class="col-lg-6 aos-item wow fadeInUp" data-wow-delay="0.3s">
                     <div class="">
                         <div class="section-head style-2 d-block">
-                            <h3 class="title w-100">About Author</h3>
-                            <p class="meera">
+                            <h3 class="title w-100">About the Author</h3>
+                            <p class="noto-sans-tamil" style="font-size: 14px;">
                                 சொந்த ஊர் திருவாரூர் மாவட்டம் ராஜமன்னார்குடி. சென்னை கிண்டி பொறியியல் கல்லூரியில் M.Sc.
                                 IT
                                 (Integrated 5 Years), BITS PILANI-யில் MBA (Digital Business) பயின்றவர்.
                             </p>
-                            <p class="meera">
+                            <p class="noto-sans-tamil" style="font-size: 14px;">
                                 நான்கு வருடம் தொழில்நுட்பத் துறையில் பணியாற்றிவிட்டு தற்போது சென்னை அடையாறில் GOD
                                 PARTICLES
                                 என்கிற விளம்பர வடிவமைப்பு நிறுவனத்தை நடத்தி வருகிறார். இந்தியா, ஆஸ்திரேலியா, அமெரிக்கா,
                                 லண்டன், சிங்கப்பூர், ஜெர்மனி, ஸ்ரீலங்கா முதலிய நாடுகளில் அமைந்திருக்கும் பல்வேறு
                                 நிறுவனங்களுக்கு விளம்பர வடிவமைப்பு சேவையைச் செய்து வருகிறது GOD PARTICLES.
                             </p>
-                            <p class="meera">
+                            <p class="noto-sans-tamil" style="font-size: 14px;">
                                 தனது 'எழுத்துப்பிழை' என்னும் முதல் புத்தகத்திற்கு கிடைத்த வரவேற்பின் காரணமாக தன்னுடைய
                                 சுய
                                 பிரசுர குழுவிற்கு 'எழுத்துப்பிழை பதிப்பகம்' என்று பெயரிட்டார். 'எழுத்துப்பிழை'யின் கீழ்
@@ -114,7 +112,7 @@
                                 டீ சாப்டலாமா?' என்னும் கதைக் குழு ஒன்று நடத்தி வருகிறார். மாதாந்திர நிகழ்வாக 'ஒரு டீ
                                 சாப்டலாமா?' நடத்தப்படுகிறது.
                             </p>
-                            <p class="meera">
+                            <p class="noto-sans-tamil" style="font-size: 14px;">
                                 எழுத்துப்பிழை, விகடகவி, கண்ணம்மா, கண் சிமிட்டல், ஒரு டீ சாப்டலாமா ஆகிய புத்தகங்களைத்
                                 தொடர்ந்து 'மையல்' என்னும் சிறுகதைத் தொகுப்பையும் 'நதி' என்னும் நாவலையும் விரைவில்
                                 வெளியிட
@@ -124,7 +122,6 @@
                         <div class="about-bx-detail">
                             <div>
                                 <h6 class="name">மனோபாரதி</h6>
-                                <span class="position">Ceo and founder</span>
                             </div>
                         </div>
                     </div>
@@ -132,7 +129,7 @@
                 <div class="col-lg-6">
                     <div class="side-content">
                         <div class="about-thumb">
-                            <img src="assets/images/author-2.png" alt="">
+                            <img src="assets/images/author.png" alt="">
                         </div>
                     </div>
                 </div>
@@ -140,31 +137,35 @@
         </div>
     </section>
 
-    <section class="content-inner-3 overflow-hidden">
-        <!-- <section class="content-inner-3 overflow-hidden"
-    style="background-image: url(https://pixio.dexignzone.com/xhtml/images/map/map2.png);"> -->
+    <section class="content-inner-3 overflow-hidden" style="background-image: url(assets/images/map2.png);">
         <div class="container">
             <div class="row align-items-start">
                 <h2 class="fs-1 mb-4 text-center">Shop In-Store</h2>
                 <ng-container *ngIf="vendors && vendors.length > 0">
                     <div class="col-xl-4 col-lg-4 col-md-4 col-12" *ngFor="let vendor of vendors | slice:0:3">
-                        <div class="dz-card blog-half style-5">
-                            <div class="dz-info">
-                                <img [src]="vendor.logo || 'https://placehold.co/200x100?text=No+Image'"
-                                    alt="Vendor Logo" class="vendor-logo mb-4" style="width: 200px;">
-                                <h3 class="dz-title text-black">
-                                    {{ vendor.name }}
-                                </h3>
-                                <p class="text-black">
-                                    Location : {{ vendor.address_line1 }}, {{ vendor.address_line2 }}, {{ vendor.city
-                                    }}, {{
-                                    vendor.state }} - {{ vendor.pincode }}
-                                </p>
-                                <a [href]="'tel:' + vendor.phone" class="font-14 read-btn">
-                                    Call:
-                                    +91 {{ vendor.phone }}</a>
+                        <div class="pricingtable-wrapper bg-light style-1 bg-light mb-3">
+                            <div class="pricingtable-inner">
+                                <div class="pricingtable-title">
+                                    <img [src]="vendor.flag"
+                                        style="width: 40px;position: absolute;top: 15px;right: 20px;border: 1px solid black" />
+                                    <img [src]="vendor.logo || 'https://placehold.co/200x100?text=No+Image'"
+                                        alt="Vendor Logo" class="vendor-logo mb-4" style="width: 200px;" />
+                                    <h3 class="title fs-3">{{ vendor.name }}</h3>
+                                    <p class="text-black">
+                                        Location : {{ vendor.address_line1 }}, {{ vendor.address_line2 }}, {{
+                                        vendor.city
+                                        }}, {{
+                                        vendor.state }} - {{ vendor.pincode }}
+                                    </p>
+                                    <a *ngIf="vendor.phone" [href]="'tel:' + vendor.phone" class="fs-3 read-btn">
+                                        <i class="fa-solid fa-phone me-2"></i> {{ vendor.phone }}</a>
+                                    <p *ngIf="!vendor.phone" class="font-15 read-btn">
+                                        Call: Not Available
+                                    </p>
+                                </div>
                             </div>
                         </div>
+
                     </div>
                 </ng-container>
                 <div class="col-12 text-center mt-4">
@@ -177,21 +178,21 @@
     </section>
 
 
-    <section class="adv-area">
+    <section class="adv-area"
+        style="background-image: url('assets/images/bulk-bg.png'); background-size: cover;background-position: top;">
         <div class="container-fluid px-0">
             <div class="row product-style2 g-0">
-                <div class="col-12 col-lg-12 col-md-12 wow fadeInUp" data-wow-delay="0.1s">
+                <div class="col-9 col-lg-10 col-md-10 wow fadeInUp" data-wow-delay="0.1s">
                     <div class="product-box style-4">
-                        <div class="product-media" style="background-image: url('assets/images/bulk-order.png');"></div>
                         <div class="product-content">
-                            <div class="main-content w-100 text-center">
-                                <h2 class="fs-1">For Bulk Orders and Distribution</h2>
-                                <p class="w-100">
-                                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptatibus explicabo
-                                    obcaecati saepe rerum laboriosam rem pariatur ea ducimus eum quam?
-                                </p>
-                                <a href="tel: +91 99627 00810" class="btn btn-secondary btn-lg">+91 99627
-                                    00810</a>
+                            <div class="main-content w-100 text-start">
+                                <h2 class="fs-2 fs-15">
+                                    10 க்கும் மேற்பட்ட மொத்த ஆர்டர்களுக்கு, சிறப்பு விலையில்,<br>
+                                    எழுத்துப்பிழை புத்தகங்கள்.
+                                </h2>
+                                <a href="tel: +91 99627 00810" class="btn btn-theme text-uppercase">Call us
+                                    <i class="fa-solid fa-arrow-right"></i>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -208,9 +209,9 @@
                     <h2 class="fs-1 mb-4 text-center">Poetry in Frames</h2>
                 </div>
                 <ng-container *ngIf="videos && videos.length > 0">
-                    <div class="col-xl-4 col-md-4 col-sm-4 col-6" *ngFor="let video of videos | slice:0:3">
+                    <div class="col-xl-4 col-md-4 col-sm-4 col-12" *ngFor="let video of videos | slice:0:3">
                         <div class="dz-media video-container">
-                            <video [src]="video.video_url" controls loop muted playsinline class="w-100 h-100">
+                            <video [src]="video.video_url" [poster]="video.thumb_url"  controls loop muted playsinline class="w-100 h-100">
                             </video>
                         </div>
                     </div>
@@ -222,27 +223,29 @@
         </div>
     </section>
 
-    <section class="content-inner">
+    <section class="content-inner-3 py-0 pb-4">
         <div class="container">
             <div class="row">
                 <div class="col-lg-12 col-md-12 wow fadeInUp" data-wow-delay="0.1s">
                     <h2 class="fs-1 mb-4 text-center">Poetry in Pixels</h2>
                 </div>
-                <ul id="masonry" class="lightgallery row">
-                    <ng-container *ngIf="gallery && gallery.length > 0">
-                        <li class="card-container col-xl-3 col-lg-3 col-md-6 col-sm-6 m-b30"
-                            *ngFor="let item of gallery">
-                            <div class="portfolio-box style-2">
-                                <div class="dz-media">
-                                    <img [src]="item.gallery_image" alt="/">
-                                </div>
-                            </div>
-                        </li>
-                    </ng-container>
-                </ul>
-                <div class="col-lg-12 col-md-12 text-center" *ngIf="!gallery || gallery.length === 0">
-                    <p>No images found at this time.</p>
-                </div>
+            </div>
+            <ul id="masonry" class="lightgallery row" *ngIf="randomImages.length > 0 && !loading">
+                <li class="card-container col-xl-3 col-lg-3 col-md-6 col-sm-6 m-b30" *ngFor="let item of randomImages">
+                    <div class="portfolio-box style-2">
+                        <div class="dz-media">
+                            <img [src]="item.gallery_image" alt="/">
+                        </div>
+                    </div>
+                </li>
+            </ul>
+            <div class="col-lg-12 col-md-12 text-center" *ngIf="!gallery || gallery.length === 0">
+                <p>No images found at this time.</p>
+            </div>
+            <div class="col-12 text-center mt-4">
+                <a href="gallery" class="btn btn-theme text-uppercase">More Gallery
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
             </div>
         </div>
     </section>

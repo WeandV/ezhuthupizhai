@@ -28,8 +28,7 @@ class Dashboard extends CI_Controller
             redirect('admin');
         }
 
-        $data['viewpage'] = 'dashboard/dashboard';
-        $this->load->view('welcome_message', $data);
+        redirect('orders');
     }
 
     public function orders()
@@ -39,7 +38,8 @@ class Dashboard extends CI_Controller
         }
 
         $data['title'] = 'Orders List';
-        $data['orders'] = $this->order_model->get_orders_list();
+        // CORRECTED LINE: Call the method that includes the 'order_status' column
+        $data['orders'] = $this->order_model->get_all_orders();
 
         $order_id = $this->uri->segment(3);
         $data['selected_order'] = null;
@@ -50,6 +50,59 @@ class Dashboard extends CI_Controller
 
         $data['viewpage'] = 'dashboard/orders';
         $this->load->view('welcome_message', $data);
+    }
+    public function update_order_status()
+    {
+        // Check if the request is an AJAX call and the user is logged in
+        if (!$this->input->is_ajax_request() || !$this->session->userdata('logged_in')) {
+            // Return an error if the request is invalid or unauthorized
+            $this->output
+                ->set_content_type('application/json')
+                ->set_status_header(403) // Forbidden
+                ->set_output(json_encode(['success' => false, 'message' => 'Unauthorized access.']));
+            return;
+        }
+
+        // Get the JSON data from the request body
+        $input_data = json_decode($this->input->raw_input_stream, true);
+
+        $order_id = $input_data['order_id'] ?? null;
+        $new_status = $input_data['order_status'] ?? null;
+
+        // Validate the received data
+        if (empty($order_id) || empty($new_status)) {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_status_header(400) // Bad Request
+                ->set_output(json_encode(['success' => false, 'message' => 'Missing order ID or status.']));
+            return;
+        }
+
+        // Validate the new status against the allowed ENUM values
+        $allowed_statuses = ['Processing', 'Shipped', 'Delivered', 'Cancelled', 'On Hold'];
+        if (!in_array($new_status, $allowed_statuses)) {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_status_header(400) // Bad Request
+                ->set_output(json_encode(['success' => false, 'message' => 'Invalid status provided.']));
+            return;
+        }
+
+        // Load the model and perform the update
+        $this->load->model('order_model');
+        $result = $this->order_model->update_order_status($order_id, $new_status);
+
+        if ($result) {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_status_header(200) // OK
+                ->set_output(json_encode(['success' => true, 'message' => 'Order status updated successfully.']));
+        } else {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_status_header(500) // Internal Server Error
+                ->set_output(json_encode(['success' => false, 'message' => 'Failed to update database.']));
+        }
     }
 
 

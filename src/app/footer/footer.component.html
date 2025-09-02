@@ -1,7 +1,7 @@
 <footer class="site-footer style-1" style="background-color: #a6dff136;">
     <div class="container">
         <div class="row d-flex justify-content-around footer-top">
-            <div class="col-lg-3 col-md-3 col-sm-3 col-12 wow fadeInUp" data-wow-delay="0.3s">
+            <div class="col-lg-4 col-md-4 col-sm-4 col-12 wow fadeInUp" data-wow-delay="0.3s">
                 <div class="widget widget_services">
                     <div class="footer-logo logo-white mb-0">
                         <a href="home" class="">
@@ -29,7 +29,7 @@
                     </ul>
                     <ul class="widget-address mb-1">
                         <li>
-                            <a href="mailto:{{email}}">
+                            <a href="mailto:{{email}}" class="text-lowercase">
                                 <i class="fas fa-envelope me-1"></i>
                                 {{email}}
                             </a>
@@ -43,44 +43,7 @@
                     </ul>
                 </div>
             </div>
-            <!-- <div class="col-lg-2 col-md-2 col-sm-2 col-12 wow fadeInUp" data-wow-delay="0.3s">
-                <div class="widget widget_services">
-                    <h5 class="footer-title mb-2">Terms & Policies</h5>
-                    <ul class="mb-5">
-                        <li>
-                            <a href="contact">
-                                <i class="fa-solid fa-hand-point-right me-1"></i>
-                                Contact
-                            </a>
-                        </li>
-                        <li>
-                            <a href="terms-and-conditions">
-                                <i class="fa-solid fa-hand-point-right me-1"></i>
-                                Terms & Conditions
-                            </a>
-                        </li>
-                        <li>
-                            <a href="privacy-policy">
-                                <i class="fa-solid fa-hand-point-right me-1"></i>
-                                Privacy Policy
-                            </a>
-                        </li>
-                        <li>
-                            <a href="shipping-and-delivery">
-                                <i class="fa-solid fa-hand-point-right me-1"></i>
-                                Shipping & Delivery
-                            </a>
-                        </li>
-                        <li>
-                            <a href="refund-policy">
-                                <i class="fa-solid fa-hand-point-right me-1"></i>
-                                Refund Policy
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div> -->
-            <div class="col-lg-3 col-md-3 col-sm-3 col-12 wow fadeInUp" data-wow-delay="0.3s">
+            <div class="col-lg-2 col-md-2 col-sm-2 col-12 wow fadeInUp" data-wow-delay="0.3s">
                 <div class="widget widget_services">
                     <h5 class="footer-title mb-2">Useful Links</h5>
                     <ul class="mb-2">
@@ -91,19 +54,19 @@
                             </a>
                         </li>
                         <li>
-                            <a href="">
+                            <a href="dashboard">
                                 <i class="fa-solid fa-hand-point-right me-1"></i>
                                 Track Order
                             </a>
                         </li>
                         <li>
-                            <a href="">
+                            <a href="dashboard">
                                 <i class="fa-solid fa-hand-point-right me-1"></i>
                                 Order History
                             </a>
                         </li>
                     </ul>
-                    <h5 class="footer-title mb-2">Social Links</h5>
+                    <h5 class="footer-title mb-2">Social Media</h5>
                     <div class="dz-social-icon style-1 justify-content-start">
                         <ul>
                             <li class="">
@@ -140,47 +103,38 @@
             </div>
         </div>
         <div class="footer-bottom py-0">
-            <div class="row fb-inner">
+            <div class="row fb-inner pt-2 pb-2">
                 <div class="col-12 col-lg-6">
                     <div class="text-start">
                         <p class="copyright-text">
                             © <span class="current-year">2025</span> Ezhuthupizhai. All Rights Reserved.</p>
                     </div>
                 </div>
-                <div class="col-12 col-lg-6">
-                    <ul class="mb-5" style="    display: inline-flex
-;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 10px;">
-                        <!-- <li>
-                            <a href="contact">
-                                <i class="fa-solid fa-hand-point-right me-1"></i>
-                                Contact
-                            </a>
-                        </li> -->
-                        <li>
-                            <a href="terms-and-conditions">
-                                <i class="fa-solid fa-hand-point-right me-1"></i>
-                                Terms & Conditions
+                <div class="col-12 col-lg-6 d-flex justify-content-end">
+                    <ul class=""
+                        style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 10px; align-items: center;justify-content: center;">
+                        <li style="display: flex; align-items: center;">
+                            <a href="terms-and-conditions" style="display: flex; align-items: center; gap: 5px;">
+                                <i class="fas fa-circle" style="font-size: 8px;"></i>
+                                <span>Terms & Conditions</span>
                             </a>
                         </li>
-                        <li>
-                            <a href="privacy-policy">
-                                <i class="fa-solid fa-hand-point-right me-1"></i>
-                                Privacy Policy
+                        <li style="display: flex; align-items: center;">
+                            <a href="privacy-policy" style="display: flex; align-items: center; gap: 5px;">
+                                <i class="fas fa-circle" style="font-size: 8px;"></i>
+                                <span>Privacy Policy</span>
                             </a>
                         </li>
-                        <li>
-                            <a href="shipping-and-delivery">
-                                <i class="fa-solid fa-hand-point-right me-1"></i>
-                                Shipping & Delivery
+                        <li style="display: flex; align-items: center;">
+                            <a href="shipping-and-delivery" style="display: flex; align-items: center; gap: 5px;">
+                                <i class="fas fa-circle" style="font-size: 8px;"></i>
+                                <span>Shipping & Delivery</span>
                             </a>
                         </li>
-                        <li>
-                            <a href="refund-policy">
-                                <i class="fa-solid fa-hand-point-right me-1"></i>
-                                Refund Policy
+                        <li style="display: flex; align-items: center;">
+                            <a href="refund-policy" style="display: flex; align-items: center; gap: 5px;">
+                                <i class="fas fa-circle" style="font-size: 8px;"></i>
+                                <span>Refund Policy</span>
                             </a>
                         </li>
                     </ul>

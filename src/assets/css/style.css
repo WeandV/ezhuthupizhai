@@ -22,7 +22,7 @@
   --rgba-primary-7: rgba(204, 13, 57, 0.7);
   --rgba-primary-8: rgba(204, 13, 57, 0.8);
   --rgba-primary-9: rgba(204, 13, 57, 0.9);
-  --font-family-base: "Lekton", monospace;
+  --font-family-base: "avory-i-pe-variable";
   --font-family-meera: "Meera Inimai", sans-serif;
   --grey: #f7f7f7;
   --border-radius-base: 20px;
@@ -19151,6 +19151,7 @@ section {
   src: url('../../assets/fonts/fonnts.com-Avory_I_PE_Lt.otf') format('opentype');
 }
 
+
 .noto-sans-tamil {
   font-family: "Noto Sans Tamil", sans-serif;
   font-optical-sizing: auto;
@@ -19158,6 +19159,10 @@ section {
   font-style: normal;
   font-variation-settings:
     "wdth" 100;
+}
+
+.tamil {
+  font-family: "Noto Sans Tamil", sans-serif;
 }
 
 @font-face {
@@ -40568,7 +40573,7 @@ video#video-background {
   }
 }
 
-@media only screen and (max-width: 767px) {
+/* @media only screen and (max-width: 767px) {
   .shop-card .btn-icon {
     padding: 0 !important;
     width: 30px;
@@ -40576,7 +40581,7 @@ video#video-background {
     height: 30px;
   }
 }
-
+ */
 @media only screen and (max-width: 575px) {
   .shop-card .dz-content {
     padding: 10px;

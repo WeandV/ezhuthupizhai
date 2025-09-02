@@ -8,6 +8,8 @@ class Api extends CI_Controller
         parent::__construct();
         $this->load->model('Shop_model');
         $this->load->model('Order_model');
+        $this->load->model('Gallery_model');
+
         $this->output->set_content_type('application/json');
         $this->load->helper('url');
 
@@ -35,7 +37,7 @@ class Api extends CI_Controller
             $product->mrp_price = number_format((float)$product->mrp_price, 2, '.', '');
             $product->special_price = number_format((float)$product->special_price, 2, '.', '');
 
-            $product->reviews = $this->Shop_model->get_product_reviews($product->id);
+            $product->videos = $this->Shop_model->get_videos_by_product_id($product->id) ?: [];
         }
 
         echo json_encode(['status' => 'success', 'data' => $products]);
@@ -43,28 +45,21 @@ class Api extends CI_Controller
 
     public function international_products()
     {
-        // Get only international products from the model
         $products = $this->Shop_model->get_international_products();
 
-        // Loop through each product to add additional data
         foreach ($products as $product) {
-            // Get thumbnail images
             $thumbnail_images = $this->Shop_model->get_product_images($product->id, true);
             $product->thumbnail_image = !empty($thumbnail_images) ? $thumbnail_images[0]->image_url : 'https://placehold.co/500x500';
 
-            // Convert category string to an array
             $product->categories = explode(',', $product->categories);
             $product->categories = array_map('trim', $product->categories);
 
-            // Format prices to 2 decimal places
             $product->mrp_price = number_format((float)$product->mrp_price, 2, '.', '');
             $product->special_price = number_format((float)$product->special_price, 2, '.', '');
 
-            // Get product reviews
-            $product->reviews = $this->Shop_model->get_product_reviews($product->id);
+            $product->videos = $this->Shop_model->get_videos_by_product_id($product->id) ?: [];
         }
 
-        // Return the final product list as a JSON response
         echo json_encode(['status' => 'success', 'data' => $products]);
     }
     public function product_detail($id)
@@ -77,6 +72,8 @@ class Api extends CI_Controller
 
             $product->mrp_price = number_format((float)$product->mrp_price, 2, '.', '');
             $product->special_price = number_format((float)$product->special_price, 2, '.', '');
+
+            $product->videos = $this->Shop_model->get_videos_by_product_id($id) ?: [];
 
             foreach ($product->images as $image) {
                 // $image->image_url = base_url($image->image_url);
@@ -177,4 +174,74 @@ class Api extends CI_Controller
         $videos = $this->Shop_model->get_all_images();
         echo json_encode(['status' => 'success', 'data' => $videos]);
     }
+
+    public function get_filters()
+    {
+        $products = $this->Gallery_model->get_all_products();
+        $filters = array_map(function ($product) {
+            return $product->product;
+        }, $products);
+        echo json_encode(['status' => 'success', 'data' => $filters]);
+    }
+
+    public function get_images()
+    {
+        $product = $this->input->get('product'); // Get the product name from the query string
+        $images = $this->Gallery_model->get_images($product);
+        echo json_encode(['status' => 'success', 'data' => $images]);
+    }
+
+        public function get_order_summary()
+    {
+        // Read the raw POST data
+        $postData = json_decode(file_get_contents('php://input'), true);
+        $userId = $postData['userId'] ?? null;
+
+        if (empty($userId)) {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_status_header(400)
+                ->set_output(json_encode(['success' => false, 'message' => 'User ID is required.']));
+            return;
+        }
+
+        $totalOrders = $this->Order_model->get_total_orders_by_user($userId);
+        $pendingOrders = $this->Order_model->get_pending_orders_by_user($userId);
+
+        $response = [
+            'success' => true,
+            'totalOrders' => $totalOrders,
+            'pendingOrders' => $pendingOrders
+        ];
+
+        $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode($response));
+    }
+
+    public function get_user_orders()
+    {
+        // Read the raw POST data
+        $postData = json_decode(file_get_contents('php://input'), true);
+        $userId = $postData['userId'] ?? null;
+
+        if (empty($userId)) {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_status_header(400)
+                ->set_output(json_encode(['success' => false, 'message' => 'User ID is required.']));
+            return;
+        }
+
+        $orders = $this->Order_model->get_orders_by_user_with_items($userId);
+        $response = [
+            'success' => true,
+            'orders' => $orders
+        ];
+
+        $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode($response));
+    }
+
 }

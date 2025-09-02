@@ -17,22 +17,22 @@ export class CartService implements OnDestroy {
   private checkoutApiUrl = environment.apiUrl + 'checkout/';
 
   private cartItemsSubject = new BehaviorSubject<CartItem[]>([]);
-  cartItems$: Observable<CartItem[]> = this.cartItemsSubject.asObservable();
+  public cartItems$: Observable<CartItem[]> = this.cartItemsSubject.asObservable();
 
   private appliedCouponsSubject = new BehaviorSubject<AppliedCoupon[]>([]);
-  appliedCoupons$: Observable<AppliedCoupon[]> = this.appliedCouponsSubject.asObservable();
+  public appliedCoupons$: Observable<AppliedCoupon[]> = this.appliedCouponsSubject.asObservable();
 
   private _allCouponsFromDatabase: AppliedCoupon[] = [];
   private couponsLoaded = new BehaviorSubject<boolean>(false);
 
   private _currentCustomerId: BehaviorSubject<number | null> = new BehaviorSubject<number | null>(101);
-  currentCustomerId$: Observable<number | null> = this._currentCustomerId.asObservable();
+  public currentCustomerId$: Observable<number | null> = this._currentCustomerId.asObservable();
 
   private _manualOverrideCouponCode = new BehaviorSubject<string | null>(null);
-  manualOverrideCouponCode$: Observable<string | null> = this._manualOverrideCouponCode.asObservable();
+  public manualOverrideCouponCode$: Observable<string | null> = this._manualOverrideCouponCode.asObservable();
 
   private _suppressAutoApply = new BehaviorSubject<boolean>(false);
-  suppressAutoApply$: Observable<boolean> = this._suppressAutoApply.asObservable();
+  public suppressAutoApply$: Observable<boolean> = this._suppressAutoApply.asObservable();
 
   public updateCurrentCustomerId(id: number | null): void {
     if (this._currentCustomerId.value !== id) {
@@ -40,50 +40,32 @@ export class CartService implements OnDestroy {
     }
   }
 
-  // Helper function to determine the effective price of a product
   private getEffectiveProductPrice(product: Product): number {
     const specialPriceNum = parseFloat(product.special_price as any);
     const mrpPriceNum = parseFloat(product.mrp_price as any);
-
-    console.log(`--- getEffectiveProductPrice for Product ID: ${product.id} ---`);
-    console.log(`Original special_price: '${product.special_price}', parsed specialPriceNum: ${specialPriceNum}`);
-    console.log(`Original mrp_price: '${product.mrp_price}', parsed mrpPriceNum: ${mrpPriceNum}`);
-
-
-    // If special_price exists and is a positive number, use it.
-    // Otherwise, default to mrp_price.
     if (!isNaN(specialPriceNum) && specialPriceNum > 0) {
-      console.log(`Returning specialPriceNum: ${specialPriceNum}`);
       return specialPriceNum;
     } else if (!isNaN(mrpPriceNum)) {
-      console.log(`Returning mrpPriceNum: ${mrpPriceNum}`);
       return mrpPriceNum;
     }
-    console.log(`Returning 0 (fallback)`);
-    return 0; // Fallback if both are invalid
+    return 0;
   }
 
   public readonly itemsTotal$: Observable<number> = this.cartItemsSubject.asObservable().pipe(
     map(items => {
-      let total = 0;
-      total = items.reduce((sum, item) => {
-        // Use the new helper function to get the correct price
-        // Now, CartItem will also have effectivePrice, so we can use that directly
-        return sum + (item.effectivePrice * item.quantity);
-      }, 0);
-      return total;
+      return items.reduce((sum, item) => sum + (item.effectivePrice * item.quantity), 0);
     })
   );
 
   public readonly cartTotal$: Observable<number> = this.itemsTotal$;
 
   public readonly totalCouponDiscount$: Observable<number> = combineLatest([
-    this.itemsTotal$,
     this.appliedCouponsSubject.asObservable(),
     this.couponsLoaded.asObservable(),
-    this._currentCustomerId.asObservable()
+    this.cartItemsSubject.asObservable(),
+    this.currentCustomerId$
   ]).pipe(
-    map(([itemsTotal, appliedCoupons, loaded, currentCustomerId]) => {
+    map(([appliedCoupons, loaded, cartItems, currentCustomerId]) => {
       if (!loaded || appliedCoupons.length === 0) {
         return 0;
       }
@@ -95,12 +77,14 @@ export class CartService implements OnDestroy {
         return 0;
       }
 
+      const subtotalForCoupon = this.getCartTotalForCoupon(couponDefinition);
+
       const isExpired = couponDefinition.expiry_date && new Date() > new Date(couponDefinition.expiry_date);
       if (isExpired) {
         return 0;
       }
 
-      const meetsMinOrder = itemsTotal >= (couponDefinition.min_order_value || 0);
+      const meetsMinOrder = subtotalForCoupon >= (couponDefinition.min_order_value || 0);
       if (!meetsMinOrder) {
         return 0;
       }
@@ -111,7 +95,7 @@ export class CartService implements OnDestroy {
           ? couponDefinition.allowed_customer_ids.split(',').map((id: string) => parseInt(id.trim(), 10)).filter((id: number) => !isNaN(id))
           : Array.isArray(couponDefinition.allowed_customer_ids) ? couponDefinition.allowed_customer_ids : [];
 
-        if (currentCustomerId === null || !allowedIds.includes(currentCustomerId as number)) { // Type assertion here
+        if (currentCustomerId === null || !allowedIds.includes(currentCustomerId as number)) {
           isCustomerAllowed = false;
         }
       }
@@ -123,9 +107,9 @@ export class CartService implements OnDestroy {
       if (couponDefinition.discount_type === 'fixed') {
         discount = couponDefinition.discount_value;
       } else if (couponDefinition.discount_type === 'percentage') {
-        discount = itemsTotal * (couponDefinition.discount_value / 100);
+        discount = subtotalForCoupon * (couponDefinition.discount_value / 100);
       }
-      return Math.min(discount, itemsTotal);
+      return Math.min(discount, subtotalForCoupon);
     }),
     catchError(err => {
       this.appliedCouponsSubject.next([]);
@@ -136,22 +120,18 @@ export class CartService implements OnDestroy {
     }),
     tap(calculatedDiscount => {
       const currentAppliedCoupon = this.appliedCouponsSubject.value.length > 0 ? this.appliedCouponsSubject.value[0] : null;
-
       if (calculatedDiscount === 0 && currentAppliedCoupon) {
         const couponDef = this._allCouponsFromDatabase.find(c => c.coupon_code === currentAppliedCoupon.coupon_code);
-
-        const itemsTotal = this.getCartTotalBeforeCoupons();
+        const subtotalForCoupon = this.getCartTotalForCoupon(couponDef);
         const currentCustomerId = this._currentCustomerId.value;
-
         const isInvalidNow = !couponDef ||
           (couponDef.expiry_date && new Date() > new Date(couponDef.expiry_date)) ||
-          (itemsTotal < (couponDef.min_order_value || 0)) ||
+          (subtotalForCoupon < (couponDef.min_order_value || 0)) ||
           (couponDef.visibility === 'specific_customer' &&
             (currentCustomerId === null ||
               !(typeof couponDef.allowed_customer_ids === 'string'
                 ? couponDef.allowed_customer_ids.split(',').map((id: string) => parseInt(id.trim(), 10)).filter((id: number) => !isNaN(id))
-                : (Array.isArray(couponDef.allowed_customer_ids) ? couponDef.allowed_customer_ids.includes(currentCustomerId as number) : false)))); // Type assertion here
-
+                : (Array.isArray(couponDef.allowed_customer_ids) ? couponDef.allowed_customer_ids.includes(currentCustomerId as number) : false))));
         if (isInvalidNow) {
           this.appliedCouponsSubject.next([]);
           this._manualOverrideCouponCode.next(null);
@@ -169,15 +149,8 @@ export class CartService implements OnDestroy {
     map(([itemsTotal, discount]) => Math.max(0, itemsTotal - discount))
   );
 
-  private readonly fixedDeliveryCharge = 50;
-  public readonly deliveryCharge$: Observable<number> = this.subTotalAfterDiscount$.pipe(
-    map(subTotal => {
-      if (subTotal >= 500) {
-        return 0;
-      }
-      return this.fixedDeliveryCharge;
-    })
-  );
+  private readonly fixedDeliveryCharge = 2;
+  public readonly deliveryCharge$: Observable<number> = of(this.fixedDeliveryCharge);
 
   public readonly finalTotal$: Observable<number> = combineLatest([
     this.subTotalAfterDiscount$,
@@ -217,7 +190,6 @@ export class CartService implements OnDestroy {
     if (this._autoApplySubscription) {
       this._autoApplySubscription.unsubscribe();
     }
-
     this._autoApplySubscription = combineLatest([
       this.cartItems$,
       this._currentCustomerId.asObservable(),
@@ -239,7 +211,13 @@ export class CartService implements OnDestroy {
           expiry_date: coupon.expiry_date ? new Date(coupon.expiry_date) : undefined,
           allowed_customer_ids: typeof coupon.allowed_customer_ids === 'string'
             ? coupon.allowed_customer_ids.split(',').map((id: string) => parseInt(id.trim(), 10)).filter((id: number) => !isNaN(id))
-            : (Array.isArray(coupon.allowed_customer_ids) ? coupon.allowed_customer_ids : null)
+            : (Array.isArray(coupon.allowed_customer_ids) ? coupon.allowed_customer_ids : null),
+          // Check for null here to differentiate from an empty list
+          allowed_product_ids: coupon.allowed_product_ids === null
+            ? null // Explicitly keep null if it's null from the API
+            : typeof coupon.allowed_product_ids === 'string'
+              ? coupon.allowed_product_ids.split(',').map((id: string) => parseInt(id.trim(), 10)).filter((id: number) => !isNaN(id))
+              : (Array.isArray(coupon.allowed_product_ids) ? coupon.allowed_product_ids : null)
         }));
       }),
       tap(processedCoupons => {
@@ -252,24 +230,31 @@ export class CartService implements OnDestroy {
     );
   }
 
+  // In src/app/services/cart.service.ts
   public getVisibleCoupons(): Observable<AppliedCoupon[]> {
-    return this.couponsLoaded.pipe(
-      filter(loaded => loaded),
-      switchMap(() => this.currentCustomerId$),
-      map((currentCustomerId) => {
+    return combineLatest([
+      this.couponsLoaded.pipe(filter(loaded => loaded)),
+      this.currentCustomerId$,
+      this.cartItems$ // <-- Add this to make it reactive to cart changes
+    ]).pipe(
+      map(([loaded, currentCustomerId, cartItems]) => {
         return this._allCouponsFromDatabase.filter(coupon => {
           const isExpired = coupon.expiry_date && new Date() > new Date(coupon.expiry_date);
           if (isExpired) return false;
+
+          const subtotalForCoupon = this.getCartTotalForCoupon(coupon);
+          if (subtotalForCoupon <= 0) return false;
+
+          if (subtotalForCoupon < (coupon.min_order_value || 0)) return false;
 
           if (coupon.visibility === 'public') {
             return true;
           }
           if (coupon.visibility === 'specific_customer') {
             if (currentCustomerId === null) return false;
-
             const allowedIds: number[] = Array.isArray(coupon.allowed_customer_ids) ? coupon.allowed_customer_ids :
               (typeof coupon.allowed_customer_ids === 'string' ? coupon.allowed_customer_ids.split(',').map((id: string) => parseInt(id.trim(), 10)).filter((id: number) => !isNaN(id)) : []);
-            return allowedIds.includes(currentCustomerId as number); // Type assertion here
+            return allowedIds.includes(currentCustomerId as number);
           }
           return false;
         });
@@ -277,29 +262,33 @@ export class CartService implements OnDestroy {
     );
   }
 
-  public isCouponEligible(coupon: AppliedCoupon, currentCartTotal: number): Observable<boolean> {
-    return this.currentCustomerId$.pipe(
-      map(currentCustomerId => {
-        const isExpired = coupon.expiry_date && new Date() > new Date(coupon.expiry_date);
-        if (isExpired) return false;
+// In src/app/services/cart.service.ts
+public isCouponEligible(coupon: AppliedCoupon): Observable<boolean> {
+  return combineLatest([
+    this.currentCustomerId$,
+    this.cartItems$ // <-- Add this to make it reactive to cart changes
+  ]).pipe(
+    map(([currentCustomerId, cartItems]) => {
+      const isExpired = coupon.expiry_date && new Date() > new Date(coupon.expiry_date);
+      if (isExpired) return false;
 
-        const meetsMinOrder = currentCartTotal >= (coupon.min_order_value || 0);
-        if (!meetsMinOrder) return false;
+      const subtotalForCoupon = this.getCartTotalForCoupon(coupon);
+      if (subtotalForCoupon <= 0) return false;
 
-        if (coupon.visibility === 'specific_customer') {
-          if (currentCustomerId === null) return false;
-          const allowedIds: number[] = typeof coupon.allowed_customer_ids === 'string'
-            ? coupon.allowed_customer_ids.split(',').map((id: string) => parseInt(id.trim(), 10)).filter((id: number) => !isNaN(id))
-            : Array.isArray(coupon.allowed_customer_ids) ? coupon.allowed_customer_ids : [];
-          if (!allowedIds.includes(currentCustomerId as number)) return false; // Type assertion here
-        }
-        return true;
-      }),
-      take(1)
-    );
-  }
-
-  private saveCartToLocalStorage(): void {
+      const meetsMinOrder = subtotalForCoupon >= (coupon.min_order_value || 0);
+      if (!meetsMinOrder) return false;
+      
+      if (coupon.visibility === 'specific_customer') {
+        if (currentCustomerId === null) return false;
+        const allowedIds: number[] = typeof coupon.allowed_customer_ids === 'string'
+          ? coupon.allowed_customer_ids.split(',').map((id: string) => parseInt(id.trim(), 10)).filter((id: number) => !isNaN(id))
+          : Array.isArray(coupon.allowed_customer_ids) ? coupon.allowed_customer_ids : [];
+        if (!allowedIds.includes(currentCustomerId as number)) return false;
+      }
+      return true;
+    })
+  );
+}  private saveCartToLocalStorage(): void {
     localStorage.setItem('shopping_cart', JSON.stringify(this.cartItemsSubject.value));
   }
 
@@ -309,10 +298,9 @@ export class CartService implements OnDestroy {
       try {
         const cartItems: CartItem[] = JSON.parse(storedCart);
         const validCartItems = cartItems.filter(item => {
-          // Ensure product and quantity exist, and try to set effectivePrice if missing
           const isValid = item.product && item.product.id !== undefined && item.quantity !== undefined;
           if (isValid && item.effectivePrice === undefined) {
-              item.effectivePrice = this.getEffectiveProductPrice(item.product);
+            item.effectivePrice = this.getEffectiveProductPrice(item.product);
           }
           return isValid;
         });
@@ -329,7 +317,8 @@ export class CartService implements OnDestroy {
       applied: this.appliedCouponsSubject.value.map(coupon => ({
         ...coupon,
         expiry_date: coupon.expiry_date instanceof Date ? coupon.expiry_date.toISOString() : undefined,
-        allowed_customer_ids: Array.isArray(coupon.allowed_customer_ids) ? coupon.allowed_customer_ids : (coupon.allowed_customer_ids || null)
+        allowed_customer_ids: Array.isArray(coupon.allowed_customer_ids) ? coupon.allowed_customer_ids : (coupon.allowed_customer_ids || null),
+        allowed_product_ids: Array.isArray(coupon.allowed_product_ids) ? coupon.allowed_product_ids : (coupon.allowed_product_ids || null)
       })),
       manualOverride: this._manualOverrideCouponCode.value,
       suppressAutoApply: this._suppressAutoApply.value
@@ -346,22 +335,21 @@ export class CartService implements OnDestroy {
           ...coupon,
           expiry_date: coupon.expiry_date ? new Date(coupon.expiry_date) : undefined,
           allowed_customer_ids: typeof coupon.allowed_customer_ids === 'string'
-            ? coupon.allowed_customer_ids.split(',').map((id: number) => parseInt(id as any, 10)).filter((id: number) => !isNaN(id))
-            : (Array.isArray(coupon.allowed_customer_ids) ? coupon.allowed_customer_ids : null)
+            ? coupon.allowed_customer_ids.split(',').map((id: string) => parseInt(id.trim(), 10)).filter((id: number) => !isNaN(id))
+            : (Array.isArray(coupon.allowed_customer_ids) ? coupon.allowed_customer_ids : null),
+          allowed_product_ids: typeof coupon.allowed_product_ids === 'string'
+            ? coupon.allowed_product_ids.split(',').map((id: string) => parseInt(id.trim(), 10)).filter((id: number) => !isNaN(id))
+            : (Array.isArray(coupon.allowed_product_ids) ? coupon.allowed_product_ids : null)
         }));
-
         this._manualOverrideCouponCode.next(parsedData.manualOverride || null);
-
         if (parsedData.manualOverride) {
           this._suppressAutoApply.next(false);
         } else {
           this._suppressAutoApply.next(false);
         }
-
         if (parsedCoupons.length > 0) {
           const storedCouponCode = parsedCoupons[0].coupon_code;
           const couponDefinition = this._allCouponsFromDatabase.find(c => c.coupon_code === storedCouponCode);
-
           if (couponDefinition) {
             this.appliedCouponsSubject.next([couponDefinition]);
           } else {
@@ -388,18 +376,13 @@ export class CartService implements OnDestroy {
   addToCart(product: Product, quantity: number = 1): void {
     const currentItems = [...this.cartItemsSubject.value];
     const existingItem = currentItems.find(item => item.product.id === product.id);
-
-    // Calculate the effective price when adding to cart
     const effectivePrice = this.getEffectiveProductPrice(product);
-
     if (existingItem) {
       existingItem.quantity += quantity;
-      // Update effective price if the product definition changed (optional, but good practice)
       existingItem.effectivePrice = effectivePrice;
     } else {
-      currentItems.push({ product, quantity, effectivePrice }); // Store effectivePrice here
+      currentItems.push({ product, quantity, effectivePrice });
     }
-
     this.cartItemsSubject.next(currentItems);
     this._suppressAutoApply.next(false);
     this.saveCartToLocalStorage();
@@ -431,11 +414,33 @@ export class CartService implements OnDestroy {
 
   public getCartTotalBeforeCoupons(): number {
     return this.cartItemsSubject.value.reduce((sum, item) => {
-      // Now, CartItem will also have effectivePrice, so we can use that directly
       return sum + (item.effectivePrice * item.quantity);
     }, 0);
   }
 
+// In src/app/services/cart.service.ts
+private getCartTotalForCoupon(coupon: AppliedCoupon | undefined): number {
+    if (!coupon) return 0;
+
+    const allowedProductIds = Array.isArray(coupon.allowed_product_ids)
+        ? coupon.allowed_product_ids
+        : (typeof coupon.allowed_product_ids === 'string'
+            ? coupon.allowed_product_ids.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id))
+            : null);
+
+    // If allowed_product_ids is null or an empty array, it applies to the full cart.
+    if (allowedProductIds === null || allowedProductIds.length === 0) {
+        return this.getCartTotalBeforeCoupons();
+    }
+
+    return this.cartItemsSubject.value
+        .filter(item => {
+            // Ensure both values are numbers for a correct comparison
+            const productIdNum = Number(item.product.id);
+            return allowedProductIds.includes(productIdNum);
+        })
+        .reduce((sum, item) => sum + (item.effectivePrice * item.quantity), 0);
+}
   public isCouponActive(couponCode: string): boolean {
     const applied = this.appliedCouponsSubject.value;
     return applied.length > 0 && applied[0].coupon_code.toUpperCase() === couponCode.toUpperCase();
@@ -443,7 +448,6 @@ export class CartService implements OnDestroy {
 
   public applyCouponByCode(couponCode: string): { success: boolean, message: string } {
     const couponToApply = this._allCouponsFromDatabase.find(c => c.coupon_code.toUpperCase() === couponCode.toUpperCase());
-
     if (!couponToApply) {
       this.appliedCouponsSubject.next([]);
       this._manualOverrideCouponCode.next(null);
@@ -451,15 +455,13 @@ export class CartService implements OnDestroy {
       this.saveCouponsToLocalStorage();
       return { success: false, message: `Coupon code "${couponCode}" is invalid.` };
     }
-
-    const baseTotal = this.getCartTotalBeforeCoupons();
+    const baseTotalForCoupon = this.getCartTotalForCoupon(couponToApply);
     const currentCustomerId = this._currentCustomerId.value;
-
     if (couponToApply.expiry_date && new Date() > new Date(couponToApply.expiry_date)) {
       return { success: false, message: `Coupon "${couponToApply.coupon_code}" has expired.` };
     }
-    if (baseTotal < (couponToApply.min_order_value || 0)) {
-      return { success: false, message: `Coupon "${couponToApply.coupon_code}" requires a minimum order of ₹${(couponToApply.min_order_value || 0).toFixed(2)}. Your current total is ₹${baseTotal.toFixed(2)}.` };
+    if (baseTotalForCoupon < (couponToApply.min_order_value || 0)) {
+      return { success: false, message: `Coupon "${couponToApply.coupon_code}" requires a minimum order of ₹${(couponToApply.min_order_value || 0).toFixed(2)} of eligible products. Your current eligible total is ₹${baseTotalForCoupon.toFixed(2)}.` };
     }
     if (couponToApply.visibility === 'specific_customer') {
       if (currentCustomerId === null) {
@@ -467,23 +469,20 @@ export class CartService implements OnDestroy {
       }
       const allowedIds: number[] = Array.isArray(couponToApply.allowed_customer_ids) ? couponToApply.allowed_customer_ids :
         (typeof couponToApply.allowed_customer_ids === 'string' ? couponToApply.allowed_customer_ids.split(',').map((id: string) => parseInt(id.trim(), 10)).filter((id: number) => !isNaN(id)) : []);
-      if (!allowedIds.includes(currentCustomerId as number)) { // Type assertion here
+      if (!allowedIds.includes(currentCustomerId as number)) {
         return { success: false, message: `Coupon "${couponToApply.coupon_code}" is not available for your account.` };
       }
     }
-
     this.appliedCouponsSubject.next([couponToApply]);
     this._manualOverrideCouponCode.next(couponToApply.coupon_code);
     this._suppressAutoApply.next(false);
     this.saveCouponsToLocalStorage();
-
     return { success: true, message: `Coupon "${couponToApply.coupon_code}" applied successfully!` };
   }
 
   public removeCoupon(couponCode: string): void {
     const currentApplied = this.appliedCouponsSubject.value;
     const isCurrentlyApplied = currentApplied.length > 0 && currentApplied[0].coupon_code.toUpperCase() === couponCode.toUpperCase();
-
     if (isCurrentlyApplied) {
       this.appliedCouponsSubject.next([]);
       this._manualOverrideCouponCode.next(null);
@@ -513,16 +512,12 @@ export class CartService implements OnDestroy {
     if (this._suppressAutoApply.value) {
       return;
     }
-
     this.couponsLoaded.pipe(
       filter(loaded => loaded),
-      // Explicitly type the combineLatest output to resolve TS2493 errors
       switchMap(() => combineLatest([this.itemsTotal$, this.allCouponsFromDatabase$, this.currentCustomerId$, this._manualOverrideCouponCode.asObservable()])),
       take(1)
     ).subscribe(([itemsTotal, allCoupons, currentCustomerId, manualOverrideCode]) => {
-
       const currentAppliedCoupon = this.appliedCouponsSubject.value.length > 0 ? this.appliedCouponsSubject.value[0] : null;
-
       if (itemsTotal === 0) {
         if (currentAppliedCoupon || manualOverrideCode) {
           this.appliedCouponsSubject.next([]);
@@ -532,25 +527,22 @@ export class CartService implements OnDestroy {
         }
         return;
       }
-
       if (manualOverrideCode) {
-        // Ensure allCoupons is not undefined before calling find
         const manuallyAppliedCoupon = allCoupons?.find((c: AppliedCoupon) => c.coupon_code?.toUpperCase() === manualOverrideCode.toUpperCase());
-
         if (manuallyAppliedCoupon) {
+          const subtotalForManualCoupon = this.getCartTotalForCoupon(manuallyAppliedCoupon);
           const isExpired = manuallyAppliedCoupon.expiry_date && new Date() > new Date(manuallyAppliedCoupon.expiry_date);
-          const meetsMinOrder = itemsTotal >= (manuallyAppliedCoupon.min_order_value || 0);
+          const meetsMinOrder = subtotalForManualCoupon >= (manuallyAppliedCoupon.min_order_value || 0);
           let isCustomerAllowed = true;
           if (manuallyAppliedCoupon.visibility === 'specific_customer') {
             const allowedIds: number[] = typeof manuallyAppliedCoupon.allowed_customer_ids === 'string'
               ? manuallyAppliedCoupon.allowed_customer_ids.split(',').map((id: string) => parseInt(id.trim(), 10)).filter((id: number) => !isNaN(id))
-              : Array.isArray(manuallyAppliedCoupon.allowed_customer_ids) ? manuallyAppliedCoupon.allowed_customer_ids : []; // Corrected typo here
-            if (currentCustomerId === null || !allowedIds.includes(currentCustomerId as number)) { // Type assertion here
+              : Array.isArray(manuallyAppliedCoupon.allowed_customer_ids) ? manuallyAppliedCoupon.allowed_customer_ids : [];
+            if (currentCustomerId === null || !allowedIds.includes(currentCustomerId as number)) {
               isCustomerAllowed = false;
             }
           }
-
-          if (isExpired || !meetsMinOrder || !isCustomerAllowed) {
+          if (isExpired || subtotalForManualCoupon <= 0 || !meetsMinOrder || !isCustomerAllowed) {
             this.appliedCouponsSubject.next([]);
             this._manualOverrideCouponCode.next(null);
             this._suppressAutoApply.next(true);
@@ -569,46 +561,40 @@ export class CartService implements OnDestroy {
           this.saveCouponsToLocalStorage();
         }
       }
-
       if (this._suppressAutoApply.value) {
         return;
       }
-
       let bestAutoCoupon: AppliedCoupon | null = null;
       let maxDiscount = 0;
-
-      // Ensure allCoupons is not undefined before calling filter
       const applicableCoupons = allCoupons?.filter((coupon: AppliedCoupon) => {
         const isExpired = coupon.expiry_date && new Date() > new Date(coupon.expiry_date);
         if (isExpired) return false;
-
-        const meetsMinOrder = itemsTotal >= (coupon.min_order_value || 0);
+        const subtotalForCoupon = this.getCartTotalForCoupon(coupon);
+        if (subtotalForCoupon <= 0) return false;
+        const meetsMinOrder = subtotalForCoupon >= (coupon.min_order_value || 0);
         if (!meetsMinOrder) return false;
-
         if (coupon.visibility === 'specific_customer') {
           if (currentCustomerId === null) return false;
           const allowedIds: number[] = Array.isArray(coupon.allowed_customer_ids) ? coupon.allowed_customer_ids :
             (typeof coupon.allowed_customer_ids === 'string' ? coupon.allowed_customer_ids.split(',').map((id: string) => parseInt(id.trim(), 10)).filter((id: number) => !isNaN(id)) : []);
-          if (!allowedIds.includes(currentCustomerId as number)) return false; // Type assertion here
+          if (!allowedIds.includes(currentCustomerId as number)) return false;
         }
         return true;
-      }) || []; // Provide a default empty array if allCoupons is undefined
-
+      }) || [];
       for (const coupon of applicableCoupons) {
         let currentCouponDiscount = 0;
+        const subtotalForCoupon = this.getCartTotalForCoupon(coupon);
         if (coupon.discount_type === 'fixed') {
           currentCouponDiscount = coupon.discount_value;
         } else if (coupon.discount_type === 'percentage') {
-          currentCouponDiscount = (itemsTotal * coupon.discount_value) / 100;
+          currentCouponDiscount = (subtotalForCoupon * coupon.discount_value) / 100;
         }
-        currentCouponDiscount = Math.min(currentCouponDiscount, itemsTotal);
-
+        currentCouponDiscount = Math.min(currentCouponDiscount, subtotalForCoupon);
         if (currentCouponDiscount > maxDiscount) {
           maxDiscount = currentCouponDiscount;
           bestAutoCoupon = coupon;
         }
       }
-
       if (bestAutoCoupon) {
         if (!currentAppliedCoupon || currentAppliedCoupon.coupon_code !== bestAutoCoupon.coupon_code) {
           this.appliedCouponsSubject.next([bestAutoCoupon]);
@@ -642,4 +628,17 @@ export class CartService implements OnDestroy {
       map(() => this._allCouponsFromDatabase)
     );
   }
+  public refreshCoupons(): void {
+    // This will reload the coupons and re-evaluate the cart
+    this.fetchCouponsFromBackend().pipe(take(1)).subscribe({
+      next: () => {
+        this.couponsLoaded.next(true);
+        this.applyBestAvailableCoupon();
+      },
+      error: (err) => {
+        console.error('Failed to refresh coupons', err);
+      }
+    });
+  }
+
 }
