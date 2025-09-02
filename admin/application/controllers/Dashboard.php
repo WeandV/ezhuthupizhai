@@ -10,7 +10,7 @@ class Dashboard extends CI_Controller
         $this->load->library('session');
 
         if (!$this->session->userdata('logged_in')) {
-            redirect('auth');
+            redirect('login');
         }
 
         $this->load->library('session');
@@ -24,21 +24,12 @@ class Dashboard extends CI_Controller
 
     public function index()
     {
-        if (!$this->session->userdata('logged_in')) {
-            redirect('admin');
-        }
-
         redirect('orders');
     }
 
     public function orders()
     {
-        if (!$this->session->userdata('logged_in')) {
-            redirect('admin');
-        }
-
         $data['title'] = 'Orders List';
-        // CORRECTED LINE: Call the method that includes the 'order_status' column
         $data['orders'] = $this->order_model->get_all_orders();
 
         $order_id = $this->uri->segment(3);
@@ -51,11 +42,10 @@ class Dashboard extends CI_Controller
         $data['viewpage'] = 'dashboard/orders';
         $this->load->view('welcome_message', $data);
     }
+
     public function update_order_status()
     {
-        // Check if the request is an AJAX call and the user is logged in
         if (!$this->input->is_ajax_request() || !$this->session->userdata('logged_in')) {
-            // Return an error if the request is invalid or unauthorized
             $this->output
                 ->set_content_type('application/json')
                 ->set_status_header(403) // Forbidden
@@ -63,13 +53,11 @@ class Dashboard extends CI_Controller
             return;
         }
 
-        // Get the JSON data from the request body
         $input_data = json_decode($this->input->raw_input_stream, true);
 
         $order_id = $input_data['order_id'] ?? null;
         $new_status = $input_data['order_status'] ?? null;
 
-        // Validate the received data
         if (empty($order_id) || empty($new_status)) {
             $this->output
                 ->set_content_type('application/json')
@@ -78,7 +66,6 @@ class Dashboard extends CI_Controller
             return;
         }
 
-        // Validate the new status against the allowed ENUM values
         $allowed_statuses = ['Processing', 'Shipped', 'Delivered', 'Cancelled', 'On Hold'];
         if (!in_array($new_status, $allowed_statuses)) {
             $this->output
@@ -88,7 +75,6 @@ class Dashboard extends CI_Controller
             return;
         }
 
-        // Load the model and perform the update
         $this->load->model('order_model');
         $result = $this->order_model->update_order_status($order_id, $new_status);
 
@@ -120,10 +106,6 @@ class Dashboard extends CI_Controller
 
     public function user_details($user_id)
     {
-        if (!$this->session->userdata('logged_in')) {
-            redirect('admin');
-        }
-
         $data['title'] = 'User Details';
         $data['user'] = $this->User_model->get_user_details($user_id);
 
@@ -140,13 +122,8 @@ class Dashboard extends CI_Controller
 
     public function inventory()
     {
-        if (!$this->session->userdata('logged_in')) {
-            redirect('admin');
-        }
-
         $data['title'] = 'inventory';
         $data['inventory'] = $this->Inventory_model->get_inventory();
-        // Get all products and their current stock for the modal dropdown
         $data['products'] = $this->Inventory_model->get_all_products_with_stock();
         $data['viewpage'] = 'dashboard/inventory';
         $this->load->view('welcome_message', $data);
