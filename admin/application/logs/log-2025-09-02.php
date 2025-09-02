@@ -12345,3 +12345,24 @@ INFO - 2025-09-02 13:35:10 --> Model "Order_model" initialized
 INFO - 2025-09-02 13:35:10 --> Model "Gallery_model" initialized
 INFO - 2025-09-02 13:35:10 --> Final output sent to browser
 INFO - 2025-09-02 13:35:10 --> Total execution time: 0.0209
+INFO - 2025-09-02 13:36:26 --> Config Class Initialized
+INFO - 2025-09-02 13:36:26 --> Hooks Class Initialized
+INFO - 2025-09-02 13:36:26 --> UTF-8 Support Enabled
+INFO - 2025-09-02 13:36:26 --> Utf8 Class Initialized
+INFO - 2025-09-02 13:36:26 --> URI Class Initialized
+INFO - 2025-09-02 13:36:26 --> Router Class Initialized
+INFO - 2025-09-02 13:36:26 --> Output Class Initialized
+INFO - 2025-09-02 13:36:26 --> Security Class Initialized
+INFO - 2025-09-02 13:36:26 --> Input Class Initialized
+INFO - 2025-09-02 13:36:26 --> Language Class Initialized
+INFO - 2025-09-02 13:36:26 --> Loader Class Initialized
+INFO - 2025-09-02 13:36:26 --> Helper loaded: url_helper
+INFO - 2025-09-02 13:36:26 --> Helper loaded: file_helper
+INFO - 2025-09-02 13:36:26 --> Helper loaded: json_response_helper
+INFO - 2025-09-02 13:36:26 --> Controller Class Initialized
+INFO - 2025-09-02 13:36:26 --> Database Driver Class Initialized
+INFO - 2025-09-02 13:36:26 --> Model "Shop_model" initialized
+INFO - 2025-09-02 13:36:26 --> Model "Order_model" initialized
+INFO - 2025-09-02 13:36:26 --> Model "Gallery_model" initialized
+INFO - 2025-09-02 13:36:26 --> Final output sent to browser
+INFO - 2025-09-02 13:36:26 --> Total execution time: 0.0676

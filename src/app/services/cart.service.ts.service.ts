@@ -149,7 +149,7 @@ export class CartService implements OnDestroy {
     map(([itemsTotal, discount]) => Math.max(0, itemsTotal - discount))
   );
 
-  private readonly fixedDeliveryCharge = 2;
+  private readonly fixedDeliveryCharge = 75;
   public readonly deliveryCharge$: Observable<number> = of(this.fixedDeliveryCharge);
 
   public readonly finalTotal$: Observable<number> = combineLatest([
