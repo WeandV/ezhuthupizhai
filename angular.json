@@ -75,10 +75,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "ezhuthupizhai:build:production"
+              "buildTarget": "ezhuthupizhai:build:production"
             },
             "development": {
-              "browserTarget": "ezhuthupizhai:build:development"
+              "buildTarget": "ezhuthupizhai:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -86,7 +86,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "ezhuthupizhai:build"
+            "buildTarget": "ezhuthupizhai:build"
           }
         },
         "test": {
