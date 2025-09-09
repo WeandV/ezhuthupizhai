@@ -6,7 +6,9 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "build:prod": "ng build --configuration=production",
+    "deploy:prod": "npm run build:prod && npx gzipper compress ./dist/ezhuthupizhai"
   },
   "private": true,
   "dependencies": {
@@ -33,12 +35,16 @@
     "@angular/cli": "^16.2.16",
     "@angular/compiler-cli": "^16.2.0",
     "@types/jasmine": "~4.3.0",
+    "@types/node": "^18.19.124",
+    "gzipper": "^8.2.1",
     "jasmine-core": "~4.6.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~5.0.4"
+    "source-map-explorer": "^2.5.3",
+    "typescript": "~5.0.4",
+    "webpack-bundle-analyzer": "^4.10.2"
   }
 }

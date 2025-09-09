@@ -3,7 +3,8 @@
         <div class="main-bar clearfix">
             <div class="container-fluid clearfix d-lg-flex d-block">
                 <div class="logo-header logo-dark">
-                    <a href="home"> <img src="assets/images/logo.png" alt="logo">
+                    <a href="home">
+                        <img src="assets/images/logo.png" alt="logo" width="150" height="40">
                     </a>
                 </div>
                 <button class="navbar-toggler collapsed navicon justify-content-end" type="button"
@@ -15,7 +16,8 @@
                 </button>
                 <div class="header-nav w3menu navbar-collapse collapse justify-content-center" id="navbarNavDropdown">
                     <div class="logo-header logo-dark">
-                        <a href="home"> <img src="assets/images/logo.png" alt="logo">
+                        <a href="home">
+                            <img src="assets/images/logo.png" alt="logo" width="150" height="40">
                         </a>
                     </div>
                     <ul class="nav navbar-nav">
@@ -102,8 +104,8 @@
                         <li *ngFor="let item of cartItems">
                             <div class="cart-widget">
                                 <div class="dz-media me-3">
-                                    <img [src]="item.product.thumbnail_image || 'https://placehold.co/100x100'"
-                                        [alt]="item.product.name">
+                                    <img [src]="item.product.thumbnail_image" [alt]="item.product.name" width="100"
+                                        height="100" loading="lazy">
                                 </div>
                                 <div class="cart-content">
                                     <h6 class="title">{{ item.product.name }}</h6>

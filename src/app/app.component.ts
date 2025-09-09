@@ -16,7 +16,6 @@ export class AppComponent {
     script.src = 'assets/vendor/bootstrap/dist/js/bootstrap.bundle.min.js';
     script.src = 'assets/vendor/bootstrap-select/dist/js/bootstrap-select.min.js';
     script.src = 'assets/vendor/bootstrap-touchspin/bootstrap-touchspin.js';
-    script.src = 'assets/vendor/swiper/swiper-bundle.min.js';
     script.src = 'assets/vendor/magnific-popup/magnific-popup.js';
     script.src = 'assets/vendor/imagesloaded/imagesloaded.js';
     script.src = 'assets/vendor/masonry/masonry-4.2.2.js';

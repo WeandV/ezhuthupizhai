@@ -124,15 +124,6 @@ class Order_model extends CI_Model
         return $query->result();
     }
 
-    public function update_order_status($order_id, $new_status)
-    {
-        $this->db->set('status', $new_status);
-        $this->db->where('id', $order_id);
-        $this->db->update('orders');
-
-        // Check if the query affected any rows
-        return $this->db->affected_rows() > 0;
-    }
 
     public function get_total_orders_by_user($userId)
     {

@@ -14,7 +14,10 @@ $route['user-details/(:any)'] = 'dashboard/user_details/$1';
 $route['direct-sales'] = 'dashboard/direct_sales';
 $route['invoice-list'] = 'dashboard/invoice_list';
 $route['dealer-list'] = 'dashboard/dealer_list';
-
+$route['ecommerce/invoice/(:any)'] = 'dashboard/view_invoice/$1';
+$route['ecommerce/invoice/view/(:num)'] = 'dashboard/view_order_invoice/$1';
+$route['shipping-label/(:num)'] = 'dashboard/download_shipping_label/$1';
+$route['view-shipping_label/(:num)'] = 'dashboard/view_shipping_label/$1';
 
 
 $route['inventory'] = 'dashboard/inventory';

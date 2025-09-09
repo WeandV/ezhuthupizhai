@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ProductServiceTsService } from 'src/app/services/product.service.ts.service';
-import { CartService } from 'src/app/services/cart.service.ts.service';
+import { CartService } from 'src/app/services/cart.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 import { Product } from 'src/app/models/product.model';

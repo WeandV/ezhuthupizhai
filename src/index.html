@@ -9,6 +9,7 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+
   <link rel="stylesheet" type="text/css" href="assets/vendor/magnific-popup/magnific-popup.min.css">
   <link rel="stylesheet" type="text/css" href="assets/vendor/bootstrap-select/dist/css/bootstrap-select.min.css">
   <link rel="stylesheet" type="text/css" href="assets/vendor/swiper/swiper-bundle.min.css">
@@ -25,6 +26,16 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@100..900&display=swap" rel="stylesheet">
+
+
+  <link rel="preload" as="image" href="assets/images/logo.png" fetchpriority="high">
+  <link rel="preconnect" href="https://ik.imagekit.io" crossorigin>
+  <link rel="preload" as="image" href="https://ik.imagekit.io/ezhuthupizhai/banners/1.webp?tr=w-1200">
+  <link rel="preload" as="image" href="https://ik.imagekit.io/ezhuthupizhai/banners/2.webp?tr=w-1200">
+  <link rel="preload" as="image" href="https://ik.imagekit.io/ezhuthupizhai/banners/3.webp?tr=w-1200">
+  <link rel="preload" as="image"
+    href="https://ik.imagekit.io/ezhuthupizhai/products/ep-special-giftbox/ep-special-giftbox-1.webp">
+
 
   <style>
     .loader-container {
@@ -92,11 +103,12 @@
       t.src = v; s = b.getElementsByTagName(e)[0];
       s.parentNode.insertBefore(t, s)
     }(window, document, 'script',
-      'https://connect.facebook.net/en_US/fbevents.js');
+      'https://connect.facebook.net/en_US/fbevents.js', 'async');
     fbq('init', '1114968746651250');
     fbq('track', 'PageView');
   </script>
-  <noscript><img height="1" width="1" style="display:none"
+  <noscript>
+    <img height="1" width="1" style="display:none"
       src="https://www.facebook.com/tr?id=1114968746651250&ev=PageView&noscript=1" /></noscript>
   <!-- End Meta Pixel Code -->
 
@@ -114,7 +126,7 @@
 
 <body id="bg">
   <!-- Google Tag Manager (noscript) -->
-  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TCQB4XZT" height="0" width="0"
+  <noscript><iframe async src="https://www.googletagmanager.com/ns.html?id=GTM-TCQB4XZT" height="0" width="0"
       style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
 
@@ -128,32 +140,28 @@
     <app-root></app-root>
   </div>
 
-  <script src="assets/js/jquery.min.js"></script>
-  <script src="assets/vendor/wow/wow.min.js"></script>
-  <script src="assets/vendor/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="assets/vendor/bootstrap-select/dist/js/bootstrap-select.min.js"></script>
-  <script src="assets/vendor/bootstrap-touchspin/bootstrap-touchspin.js"></script>
-  <script src="assets/vendor/swiper/swiper-bundle.min.js"></script>
-  <script src="assets/vendor/magnific-popup/magnific-popup.js"></script>
-  <script src="assets/vendor/imagesloaded/imagesloaded.js"></script>
-  <script src="assets/vendor/masonry/masonry-4.2.2.js"></script>
-  <script src="assets/vendor/masonry/isotope.pkgd.min.js"></script>
-  <script src="assets/vendor/countdown/jquery.countdown.js"></script>
-  <script src="assets/vendor/wnumb/wNumb.js"></script>
-  <script src="assets/vendor/nouislider/nouislider.min.js"></script>
-  <script src="assets/vendor/slick/slick.min.js"></script>
-  <script src="assets/vendor/lightgallery/dist/lightgallery.min.js"></script>
-  <script src="assets/vendor/lightgallery/dist/plugins/thumbnail/lg-thumbnail.min.js"></script>
-  <script src="assets/vendor/lightgallery/dist/plugins/zoom/lg-zoom.min.js"></script>
+  <script src="assets/js/jquery.min.js" defer></script>
+  <script src="assets/vendor/wow/wow.min.js" async></script>
+  <script src="assets/vendor/bootstrap/dist/js/bootstrap.bundle.min.js" async></script>
+  <script src="assets/vendor/bootstrap-select/dist/js/bootstrap-select.min.js" async></script>
+  <script src="assets/vendor/bootstrap-touchspin/bootstrap-touchspin.js" async></script>
+  <script src="assets/vendor/magnific-popup/magnific-popup.js" async></script>
+  <script src="assets/vendor/imagesloaded/imagesloaded.js" async></script>
+  <script src="assets/vendor/masonry/masonry-4.2.2.js" async></script>
+  <script src="assets/vendor/masonry/isotope.pkgd.min.js" async></script>
+  <script src="assets/vendor/countdown/jquery.countdown.js" async></script>
+  <script src="assets/vendor/wnumb/wNumb.js" async></script>
+  <script src="assets/vendor/nouislider/nouislider.min.js" async></script>
+  <script src="assets/vendor/slick/slick.min.js" async></script>
+  <script src="assets/vendor/lightgallery/dist/lightgallery.min.js" async></script>
+  <script src="assets/vendor/lightgallery/dist/plugins/thumbnail/lg-thumbnail.min.js" async></script>
+  <script src="assets/vendor/lightgallery/dist/plugins/zoom/lg-zoom.min.js" async></script>
 
-  <script src="assets/js/dz.carousel.js"></script>
-  <script src="assets/js/dz.ajax.js"></script>
+  <script src="assets/js/dz.carousel.js" async></script>
+  <script src="assets/js/dz.ajax.js" async></script>
 
-  <script src="assets/js/custom.min.js"></script>
-  <script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCsnuLzhOMeLMWhAoM8KawCxbChGVv5NqU&libraries=places&callback=initAutocomplete"
-    async defer></script>
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script src="assets/js/custom.min.js" async></script>
+  <script async src="https://checkout.razorpay.com/v1/checkout.js" async></script>
   <script>
     window.addEventListener('load', () => {
       const loaderContainer = document.querySelector('.loader-container');

@@ -1,6 +1,9 @@
 import { Component, OnInit, AfterViewInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import SwiperCore from 'swiper';
 import Swiper from 'swiper';
-import { Navigation, Pagination, Parallax } from 'swiper/modules';
+import { Navigation, Pagination, Autoplay } from 'swiper/modules';
+
+
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/app/environments/environment';
 import { GalleryImage, GalleryService } from 'src/app/services/gallery.service';
@@ -97,7 +100,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   initProductSwiper(): void {
-    Swiper.use([Navigation, Pagination, Parallax]); // Register modules you need
+    SwiperCore.use([Navigation, Pagination, Autoplay]);
 
     if (this.productSwiperContainer) { // No need for typeof Swiper !== 'undefined' anymore
       console.log('Attempting to initialize Swiper with dz.carousel.js options (NPM module method)...');
@@ -109,45 +112,17 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
         slidesPerView: 3,
         spaceBetween: 15,
         pagination: {
-          el: ".swiper-pagination-trading",
-          clickable: true,
+          el: '.swiper-pagination-trading',
+          clickable: true
         },
-        // If using navigation, uncomment and adjust:
-        // navigation: {
-        //   nextEl: '.swiper-button-next',
-        //   prevEl: '.swiper-button-prev',
-        // },
         breakpoints: {
-          340: {
-            slidesPerView: 1,
-            centeredSlides: true,
-            spaceBetween: 15,
-          },
-          575: {
-            slidesPerView: 1,
-            centeredSlides: false,
-            spaceBetween: 15,
-          },
-          600: {
-            slidesPerView: 1,
-            spaceBetween: 15,
-          },
-          767: {
-            slidesPerView: 1.5,
-            spaceBetween: 15,
-          },
-          991: {
-            slidesPerView: 2,
-            spaceBetween: 15,
-          },
-          1024: {
-            slidesPerView: 2,
-            spaceBetween: 15,
-          },
-          1400: {
-            slidesPerView: 1,
-            spaceBetween: 15,
-          },
+          340: { slidesPerView: 1, centeredSlides: true, spaceBetween: 15 },
+          575: { slidesPerView: 1, centeredSlides: false, spaceBetween: 15 },
+          600: { slidesPerView: 1, spaceBetween: 15 },
+          767: { slidesPerView: 1.5, spaceBetween: 15 },
+          991: { slidesPerView: 2, spaceBetween: 15 },
+          1024: { slidesPerView: 2, spaceBetween: 15 },
+          1400: { slidesPerView: 1, spaceBetween: 15 },
         }
       });
       console.log('Swiper initialized (NPM module):', this.productSwiper);

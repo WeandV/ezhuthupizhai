@@ -32,35 +32,37 @@ td {
 }
 
 #snackbox {
-    visibility: hidden;
-    min-width: 250px;
-    background-color: #333;
-    color: #fff;
-    text-align: center;
-    border-radius: 2px;
-    padding: 16px;
-    position: fixed;
-    z-index: 10000;
-    left: 50%;
+    min-width: 250px !important;
+    background-color: #333 !important;
+    color: #fff !important;
+    text-align: center !important;
+    border-radius: 2px !important;
+    padding: 16px !important;
+    position: fixed !important;
+    z-index: 10000 !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
     bottom: 30px;
-    transform: translateX(-50%);
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-    transition: visibility 0s, opacity 0.5s linear;
-    opacity: 0;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: opacity 0.5s ease-in-out !important;
+
 }
 
 #snackbox.show {
-    visibility: visible;
-    opacity: 1;
+    opacity: 1 !important;
+    pointer-events: auto !important;
 }
 
 #snackbox.success {
-    background-color: #28a745;
+    background-color: #28a745 !important;
 }
 
 #snackbox.error {
-    background-color: #dc3545;
+    background-color: #dc3545 !important;
 }
+
 
 .toggle-details-btn {
     border: none !important;
@@ -75,5 +77,38 @@ td {
 }
 
 .fs-13 {
-  font-size: 13px;
+    font-size: 13px;
+}
+
+.bg-light {
+    background-color: #e6f1f5 !important;
+}
+
+.bg-light-primary {
+    background-color: #7ccdeb !important;
+}
+
+.login-cover-img {
+    background-image: url(../images/sing-in-bg.png) !important;
+}
+
+.wrapper .page-content-wrapper {
+    margin-left: 270px;
+    margin-top: 85px;
+    margin-right: 10px;
+    border-radius: 20px;
+}
+
+.bg-custom-gradient {
+    background: linear-gradient(to right, #1f442b, #387630) !important;
+    color: white;
+}
+
+.widget-icon-small.bg-custom-dark-green {
+    background-color: #1a5d3f !important;
+    color: white;
+}
+
+.bg-success {
+    background-image: linear-gradient(to right, #1f442b, #387630);
 }

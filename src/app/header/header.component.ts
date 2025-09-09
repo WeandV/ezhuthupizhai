@@ -4,7 +4,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, Subscription } from 'rxjs';
 
-import { CartService } from '../services/cart.service.ts.service';
+import { CartService } from '../services/cart.service';
 import { UserService, User } from '../services/user.service';
 
 import { CartItem } from 'src/app/models/cart-item.model';

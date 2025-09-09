@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { GalleryService } from 'src/app/services/gallery.service';
-import { filter } from 'rxjs/operators';
 import { GalleryImage } from 'src/app/models/gallery-image.model';
 
 @Component({

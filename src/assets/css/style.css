@@ -19137,13 +19137,6 @@ section {
   }
 }
 
-@font-face {
-  font-family: 'Lufga';
-  font-style: normal;
-  font-weight: 400;
-  src: local("Lufga"), url("../fonts/lufga-cufonfonts/LufgaRegular.woff") format("woff");
-}
-
 
 
 @font-face {
@@ -19168,126 +19161,8 @@ section {
 @font-face {
   font-family: "Noto Sans Tamil", sans-serif;
   src: url('https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@100..900&display=swap') format('opentype');
-}
-
-
-@font-face {
-  font-family: 'Lufga';
-  font-style: italic;
-  font-weight: 400;
-  src: local("Lufga"), url("../fonts/lufga-cufonfonts/LufgaItalic.woff") format("woff");
-}
-
-@font-face {
-  font-family: 'Lufga';
-  font-style: normal;
-  font-weight: 100;
-  src: local("Lufga"), url("../fonts/lufga-cufonfonts/LufgaThin.woff") format("woff");
-}
-
-@font-face {
-  font-family: 'Lufga';
-  font-style: italic;
-  font-weight: 100;
-  src: local("Lufga"), url("../fonts/lufga-cufonfonts/LufgaThinItalic.woff") format("woff");
-}
-
-@font-face {
-  font-family: 'Lufga';
-  font-style: normal;
-  font-weight: 200;
-  src: local("Lufga"), url("../fonts/lufga-cufonfonts/LufgaExtraLight.woff") format("woff");
-}
-
-@font-face {
-  font-family: 'Lufga';
-  font-style: italic;
-  font-weight: 200;
-  src: local("Lufga"), url("../fonts/lufga-cufonfonts/LufgaExtraLightItalic.woff") format("woff");
-}
-
-@font-face {
-  font-family: 'Lufga';
-  font-style: normal;
-  font-weight: 300;
-  src: local("Lufga"), url("../fonts/lufga-cufonfonts/LufgaLight.woff") format("woff");
-}
-
-@font-face {
-  font-family: 'Lufga';
-  font-style: italic;
-  font-weight: 300;
-  src: local("Lufga"), url("../fonts/lufga-cufonfonts/LufgaLightItalic.woff") format("woff");
-}
-
-@font-face {
-  font-family: 'Lufga';
-  font-style: normal;
-  font-weight: 500;
-  src: local("Lufga"), url("../fonts/lufga-cufonfonts/LufgaMedium.woff") format("woff");
-}
-
-@font-face {
-  font-family: 'Lufga';
-  font-style: italic;
-  font-weight: 500;
-  src: local("Lufga"), url("../fonts/lufga-cufonfonts/LufgaMediumItalic.woff") format("woff");
-}
-
-@font-face {
-  font-family: 'Lufga';
-  font-style: normal;
-  font-weight: 600;
-  src: local("Lufga"), url("../fonts/lufga-cufonfonts/LufgaSemiBold.woff") format("woff");
-}
-
-@font-face {
-  font-family: 'Lufga';
-  font-style: italic;
-  font-weight: 600;
-  src: local("Lufga"), url("../fonts/lufga-cufonfonts/LufgaSemiBoldItalic.woff") format("woff");
-}
-
-@font-face {
-  font-family: 'Lufga';
-  font-style: normal;
-  font-weight: 700;
-  src: local("Lufga"), url("../fonts/lufga-cufonfonts/LufgaBold.woff") format("woff");
-}
-
-@font-face {
-  font-family: 'Lufga';
-  font-style: italic;
-  font-weight: 700;
-  src: local("Lufga"), url("../fonts/lufga-cufonfonts/LufgaBoldItalic.woff") format("woff");
-}
-
-@font-face {
-  font-family: 'Lufga';
-  font-style: normal;
-  font-weight: 800;
-  src: local("Lufga"), url("../fonts/lufga-cufonfonts/LufgaExtraBold.woff") format("woff");
-}
-
-@font-face {
-  font-family: 'Lufga';
-  font-style: italic;
-  font-weight: 800;
-  src: local("Lufga"), url("../fonts/lufga-cufonfonts/LufgaExtraBoldItalic.woff") format("woff");
-}
-
-@font-face {
-  font-family: 'Lufga';
-  font-style: normal;
-  font-weight: 900;
-  src: local("Lufga"), url("../fonts/lufga-cufonfonts/LufgaBlack.woff") format("woff");
-}
-
-@font-face {
-  font-family: 'Lufga';
-  font-style: italic;
-  font-weight: 900;
-  src: local("Lufga"), url("../fonts/lufga-cufonfonts/LufgaBlackItalic.woff") format("woff");
+  font-display: swap;
+  /* Add this line */
 }
 
 .main-slider {
@@ -26457,7 +26332,6 @@ btn:focus {
   font-weight: 500;
   position: relative;
   text-transform: capitalize;
-  font-family: "Lufga", sans-serif;
   align-items: center;
   overflow: hidden;
   z-index: 1;
@@ -28872,7 +28746,6 @@ btn:focus {
 .owl-btn-1 .owl-nav button.owl-next:before {
   content: "";
   position: absolute;
-  font-family: "Lufga", sans-serif;
   font-size: 15px;
   line-height: 15px;
   letter-spacing: 3px;
@@ -63662,7 +63535,6 @@ footer.footer-dark .icon-bx-wraper {
 
 .footer-link li {
   display: inline-block;
-  font-family: "Lufga", sans-serif;
   position: relative;
   padding: 0 25px 0 20px;
 }

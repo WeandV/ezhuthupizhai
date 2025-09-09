@@ -10,3 +10,22 @@
 .masonry-item {
     width: 200px;
 }
+
+.swiper-product .product-media img {
+    width: 100%;
+    height: auto;
+}
+
+.about-thumb {
+    aspect-ratio: 510 / 689;
+    /* maintains correct shape */
+    max-width: 510px;
+    width: 100%;
+    overflow: hidden;
+}
+
+.about-thumb img {
+    width: 100%;
+    height: auto;
+    display: block;
+}

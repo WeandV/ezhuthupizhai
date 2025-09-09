@@ -8,8 +8,14 @@
     border-radius: 20px !important;
 }
 
-[class*="icon-bx-"][class*="bg-"] a, [class*="icon-bx-"][class*="bg-"] span {
+[class*="icon-bx-"][class*="bg-"] a,
+[class*="icon-bx-"][class*="bg-"] span {
     color: green !important;
     font-weight: 500 !important;
 }
 
+
+.dz-media img {
+    aspect-ratio: 1 / 1;
+    display: block;
+}

@@ -453,9 +453,10 @@ button.bootstrap-touchspin-up {
     }
 
     .product-box.style-2 {
-        height: 200px !important;
+        height: 160px !important;
     }
-    .fs-15{
+
+    .fs-15 {
         font-size: 15px !important;
     }
 }

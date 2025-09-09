@@ -1,6 +1,9 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 
+use Dompdf\Dompdf;
+use Dompdf\Options;
+
 class Dashboard extends CI_Controller
 {
 
@@ -15,7 +18,7 @@ class Dashboard extends CI_Controller
 
         $this->load->library('session');
         $this->load->helper('url');
-        $this->load->model('order_model');
+        $this->load->model('admin/Order_model');
         $this->load->model('User_model');
         $this->load->model('admin/Inventory_model');
         $this->load->model('admin/Invoice_model');
@@ -24,19 +27,185 @@ class Dashboard extends CI_Controller
 
     public function index()
     {
-        redirect('orders');
+        $this->load->database();
+
+        // --- Website (E-commerce) Sales Metrics (from 'orders' table) ---
+
+        $total_website_revenue_query = $this->db->select_sum('final_total')->get('orders');
+        $total_website_revenue = $total_website_revenue_query->row()->final_total ?? 0;
+
+        $current_month_website_revenue_query = $this->db->select_sum('final_total')
+            ->where('MONTH(created_at)', date('m'))
+            ->where('YEAR(created_at)', date('Y'))
+            ->get('orders');
+        $current_month_website_revenue = $current_month_website_revenue_query->row()->final_total ?? 0;
+
+        $start_of_week = date('Y-m-d', strtotime('monday this week'));
+        $end_of_week = date('Y-m-d', strtotime('sunday this week'));
+
+        $current_week_website_revenue_query = $this->db->select_sum('final_total')
+            ->where('DATE(created_at) >=', $start_of_week)
+            ->where('DATE(created_at) <=', $end_of_week)
+            ->get('orders');
+        $current_week_website_revenue = $current_week_website_revenue_query->row()->final_total ?? 0;
+
+        // --- In-Store (Invoice) Sales Metrics (from 'invoices' table) ---
+
+        // UPDATED: Queries now sum 'sub_total' and ignore 'recipient_type'.
+        $total_instore_revenue_query = $this->db->select_sum('sub_total')
+            ->where('payment_status', 'Paid') // Only count paid invoices
+            ->get('invoices');
+        $total_instore_revenue = $total_instore_revenue_query->row()->sub_total ?? 0;
+
+        $current_month_instore_revenue_query = $this->db->select_sum('sub_total')
+            ->where('MONTH(invoice_date)', date('m'))
+            ->where('YEAR(invoice_date)', date('Y'))
+            ->where('payment_status', 'Paid')
+            ->get('invoices');
+        $current_month_instore_revenue = $current_month_instore_revenue_query->row()->sub_total ?? 0;
+
+        $current_week_instore_revenue_query = $this->db->select_sum('sub_total')
+            ->where('DATE(invoice_date) >=', $start_of_week)
+            ->where('DATE(invoice_date) <=', $end_of_week)
+            ->where('payment_status', 'Paid')
+            ->get('invoices');
+
+        $current_week_instore_revenue = $current_week_instore_revenue_query->row()->sub_total ?? 0;
+
+        // --- Combined (Website + In-Store) Metrics ---
+
+        $combined_total_revenue = $total_website_revenue + $total_instore_revenue;
+        $combined_current_month_revenue = $current_month_website_revenue + $current_month_instore_revenue;
+        $combined_current_week_revenue = $current_week_website_revenue + $current_week_instore_revenue;
+
+        // --- Order Status Metrics (from 'orders' table) ---
+
+        $total_orders = $this->db->count_all('orders');
+        $processed_orders = $this->db->where('status', 'Processing')->count_all_results('orders');
+        $shipped_orders = $this->db->where('status', 'Shipped')->count_all_results('orders');
+        $delivered_orders = $this->db->where('status', 'Delivered')->count_all_results('orders');
+        $cancelled_orders = $this->db->where('status', 'Cancelled')->count_all_results('orders');
+        $on_hold_orders = $this->db->where('status', 'On Hold')->count_all_results('orders');
+
+        // --- Other Metrics & Charts (existing logic) ---
+
+        $daily_sales_query = $this->db->select('DATE(created_at) AS sales_date, SUM(final_total) AS daily_revenue, COUNT(id) AS daily_orders')
+            ->group_by('sales_date')
+            ->order_by('sales_date', 'DESC')
+            ->get('orders');
+        $daily_sales = $daily_sales_query->result_array();
+
+        $today_invoices_query = $this->db->select('SUM(total_amount) AS today_revenue, COUNT(id) AS today_count')
+            ->where('DATE(created_at)', date('Y-m-d'))
+            ->get('invoices');
+
+        $today_invoices_data = $today_invoices_query->row();
+        $today_invoices_revenue = $today_invoices_data->today_revenue ?? 0;
+        $today_invoices_count = $today_invoices_data->today_count ?? 0;
+
+        $invoices_daily_sales_query = $this->db->select('DATE(invoice_date) AS sales_date, payment_status, SUM(total_amount) AS daily_revenue, COUNT(id) AS daily_invoices')
+            ->group_by('sales_date, payment_status')
+            ->order_by('sales_date', 'DESC')
+            ->order_by('payment_status', 'ASC')
+            ->get('invoices');
+        $invoices_daily_sales = $invoices_daily_sales_query->result_array();
+
+        // Chart 1: Daily Revenue Data (Last 30 days)
+        $daily_orders_query = $this->db->select('DATE(created_at) as sales_date, SUM(final_total) as daily_revenue')
+            ->where('created_at >=', date('Y-m-d', strtotime('-30 days')))
+            ->group_by('sales_date')
+            ->order_by('sales_date', 'ASC')
+            ->get('orders');
+        $daily_orders_sales = $daily_orders_query->result_array();
+
+        $daily_invoices_query = $this->db->select('DATE(invoice_date) as sales_date, SUM(sub_total) as daily_revenue')
+            ->where('invoice_date >=', date('Y-m-d', strtotime('-30 days')))
+            ->where('payment_status', 'paid')
+            ->group_by('sales_date')
+            ->order_by('sales_date', 'ASC')
+            ->get('invoices');
+        $daily_invoices_sales = $daily_invoices_query->result_array();
+
+        $combined_sales = [];
+        foreach ($daily_orders_sales as $row) {
+            $combined_sales[$row['sales_date']] = ($combined_sales[$row['sales_date']] ?? 0) + $row['daily_revenue'];
+        }
+        foreach ($daily_invoices_sales as $row) {
+            $combined_sales[$row['sales_date']] = ($combined_sales[$row['sales_date']] ?? 0) + $row['daily_revenue'];
+        }
+
+        $this->db->select('product_id, quantity');
+        $order_items = $this->db->get_compiled_select('order_items');
+
+        $this->db->select('product_id, quantity');
+        $invoice_items = $this->db->get_compiled_select('invoice_items');
+
+        $combined_items_query = "($order_items) UNION ALL ($invoice_items)";
+
+        $this->db->select('t1.product_id, SUM(t1.quantity) as total_quantity_sold, t2.name as product_name')
+            ->from("($combined_items_query) as t1", FALSE)
+            ->join('products as t2', 't1.product_id = t2.id')
+            ->group_by('t1.product_id')
+            ->order_by('total_quantity_sold', 'DESC')
+            ->limit(10);
+
+        $top_products_query = $this->db->get();
+        $top_products = $top_products_query->result_array();
+
+        // Chart 3: Invoice Status Breakdown
+        $this->db->select('payment_status, COUNT(id) as status_count');
+        $this->db->group_by('payment_status');
+        $status_breakdown = $this->db->get('invoices')->result_array();
+
+        // Final data array
+        $data = [
+            // Website Metrics
+            'total_website_revenue' => $total_website_revenue,
+            'current_month_website_revenue' => $current_month_website_revenue,
+            'current_week_website_revenue' => $current_week_website_revenue,
+
+            // In-Store Metrics
+            'total_instore_revenue' => $total_instore_revenue,
+            'current_month_instore_revenue' => $current_month_instore_revenue,
+            'current_week_instore_revenue' => $current_week_instore_revenue,
+
+            // Combined Metrics
+            'combined_total_revenue' => $combined_total_revenue,
+            'combined_current_month_revenue' => $combined_current_month_revenue,
+            'combined_current_week_revenue' => $combined_current_week_revenue,
+
+            // Order Status
+            'total_orders' => $total_orders,
+            'processed_orders' => $processed_orders,
+            'shipped_orders' => $shipped_orders,
+            'delivered_orders' => $delivered_orders,
+            'cancelled_orders' => $cancelled_orders,
+            'on_hold_orders' => $on_hold_orders,
+
+            // Other existing data
+            'daily_sales' => $daily_sales,
+            'today_invoices_revenue' => $today_invoices_revenue,
+            'today_invoices_count' => $today_invoices_count,
+            'invoices_daily_sales' => $invoices_daily_sales,
+            'combined_sales' => $combined_sales,
+            'top_products' => $top_products,
+            'status_breakdown' => $status_breakdown,
+        ];
+
+        $data['viewpage'] = 'dashboard/dashboard';
+        $this->load->view('welcome_message', $data);
     }
 
     public function orders()
     {
         $data['title'] = 'Orders List';
-        $data['orders'] = $this->order_model->get_all_orders();
+        $data['orders'] = $this->Order_model->get_all_orders();
 
         $order_id = $this->uri->segment(3);
         $data['selected_order'] = null;
 
         if ($order_id) {
-            $data['selected_order'] = $this->order_model->get_order_with_items($order_id);
+            $data['selected_order'] = $this->Order_model->get_order_with_items($order_id);
         }
 
         $data['viewpage'] = 'dashboard/orders';
@@ -75,8 +244,7 @@ class Dashboard extends CI_Controller
             return;
         }
 
-        $this->load->model('order_model');
-        $result = $this->order_model->update_order_status($order_id, $new_status);
+        $result = $this->Order_model->update_order_status($order_id, $new_status);
 
         if ($result) {
             $this->output
@@ -91,6 +259,151 @@ class Dashboard extends CI_Controller
         }
     }
 
+    public function view_invoice($order_id)
+    {
+        if (!$order_id || !is_numeric($order_id)) {
+            show_404();
+        }
+        $data['order'] = $this->Order_model->get_order_with_items($order_id);
+        if (empty($data['order'])) {
+            show_404();
+        }
+        $data['title'] = 'Invoice for Order #' . $order_id;
+        $data['viewpage'] = 'dashboard/view-invoice';
+        $this->load->view('welcome_message', $data);
+    }
+
+    public function download_shipping_label($order_id)
+    {
+        ob_start();
+
+        if (!$order_id || !is_numeric($order_id)) {
+            ob_end_clean();
+            show_error('Invalid order ID.', 404);
+            return;
+        }
+
+        try {
+            require_once APPPATH . 'third_party/dompdf/autoload.inc.php';
+            $order_data = $this->Order_model->get_order_with_items($order_id);
+
+            if (empty($order_data)) {
+                ob_end_clean();
+                show_error('Order not found.', 404);
+                return;
+            }
+
+            $data['invoice'] = (object) [
+                'invoice_number' => $order_data->id ?? 'N/A',
+                'recipient_name' => ($order_data->first_name ?? '') . ' ' . ($order_data->last_name ?? ''),
+                'address_line1' => $order_data->address1 ?? 'N/A',
+                'address_line2' => $order_data->address2 ?? '',
+                'city' => $order_data->city ?? 'N/A',
+                'state' => $order_data->state ?? 'N/A',
+                'pincode' => $order_data->zip_code ?? 'N/A',
+                'phone' => $order_data->phone ?? 'N/A',
+                'email' => $order_data->email ?? 'N/A',
+                'invoice_date' => $order_data->created_at ?? date('Y-m-d'),
+                'payment_method' => $order_data->payment_method,
+                'coupon_discount' => $order_data->coupon_discount ?? 0,
+                'delivery_charge' => $order_data->delivery_charge ?? 0,
+                'total_amount' => $order_data->final_total ?? 0,
+            ];
+
+            $data['items'] = $order_data->items ?? [];
+
+            $options = new Options();
+            $options->set('isHtml5ParserEnabled', true);
+            $options->set('isRemoteEnabled', true);
+            $dompdf = new Dompdf($options);
+
+            $html = $this->load->view('invoices/shipping_label_pdf', $data, true);
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->render();
+
+            ob_end_clean();
+
+            $filename = 'shipping_label_' . $order_id;
+            // This is the line that keeps the download functionality:
+            $dompdf->stream($filename . '.pdf', array("Attachment" => true));
+        } catch (Exception $e) {
+            ob_end_clean();
+            header('Content-Type: text/plain');
+            echo "An error occurred during PDF generation:\n\n";
+            echo "Message: " . $e->getMessage() . "\n";
+            echo "File: " . $e->getFile() . "\n";
+            echo "Line: " . $e->getLine() . "\n";
+            echo "Trace: \n" . $e->getTraceAsString();
+            exit;
+        }
+    }
+
+    public function view_shipping_label($order_id)
+    {
+        ob_start();
+
+        if (!$order_id || !is_numeric($order_id)) {
+            ob_end_clean();
+            show_error('Invalid order ID.', 404);
+            return;
+        }
+
+        try {
+            require_once APPPATH . 'third_party/dompdf/autoload.inc.php';
+            $order_data = $this->Order_model->get_order_with_items($order_id);
+
+            if (empty($order_data)) {
+                ob_end_clean();
+                show_error('Order not found.', 404);
+                return;
+            }
+
+            $data['invoice'] = (object) [
+                'invoice_number' => $order_data->id ?? 'N/A',
+                'recipient_name' => ($order_data->first_name ?? '') . ' ' . ($order_data->last_name ?? ''),
+                'address_line1' => $order_data->address1 ?? 'N/A',
+                'address_line2' => $order_data->address2 ?? '',
+                'city' => $order_data->city ?? 'N/A',
+                'state' => $order_data->state ?? 'N/A',
+                'pincode' => $order_data->zip_code ?? 'N/A',
+                'phone' => $order_data->phone ?? 'N/A',
+                'email' => $order_data->email ?? 'N/A',
+                'invoice_date' => $order_data->created_at ?? date('Y-m-d'),
+                'payment_method' => $order_data->payment_method,
+                'coupon_discount' => $order_data->coupon_discount ?? 0,
+                'delivery_charge' => $order_data->delivery_charge ?? 0,
+                'total_amount' => $order_data->final_total ?? 0,
+            ];
+
+            $data['items'] = $order_data->items ?? [];
+
+            $options = new Options();
+            $options->set('isHtml5ParserEnabled', true);
+            $options->set('isRemoteEnabled', true);
+            $dompdf = new Dompdf($options);
+
+            $html = $this->load->view('invoices/shipping_label_pdf', $data, true);
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->render();
+
+            ob_end_clean();
+
+            $filename = 'shipping_label_' . $order_id;
+            // This is the line you need to change for viewing in a new tab:
+            $dompdf->stream($filename . '.pdf', array("Attachment" => false));
+        } catch (Exception $e) {
+            ob_end_clean();
+            header('Content-Type: text/plain');
+            echo "An error occurred during PDF generation:\n\n";
+            echo "Message: " . $e->getMessage() . "\n";
+            echo "File: " . $e->getFile() . "\n";
+            echo "Line: " . $e->getLine() . "\n";
+            echo "Trace: \n" . $e->getTraceAsString();
+            exit;
+        }
+    }
 
     public function customers()
     {
@@ -118,7 +431,6 @@ class Dashboard extends CI_Controller
         $data['viewpage'] = 'dashboard/customer_details';
         $this->load->view('welcome_message', $data);
     }
-
 
     public function inventory()
     {
@@ -271,6 +583,143 @@ class Dashboard extends CI_Controller
         $data['title'] = 'Invoices';
         $data['viewpage'] = 'in-store/invoice-list';
         $this->load->view('welcome_message', $data);
+    }
+
+    public function update_invoice_status()
+    {
+        if (!$this->input->is_ajax_request() || !$this->session->userdata('logged_in')) {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_status_header(403) // Forbidden
+                ->set_output(json_encode(['success' => false, 'message' => 'Unauthorized access.']));
+            return;
+        }
+
+        $input_data = json_decode($this->input->raw_input_stream, true);
+
+        $invoice_id = $input_data['invoice_id'] ?? null;
+        $new_status = $input_data['payment_status'] ?? null;
+
+        if (empty($invoice_id) || empty($new_status)) {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_status_header(400)
+                ->set_output(json_encode(['success' => false, 'message' => 'Missing invoice ID or status.']));
+            return;
+        }
+
+        $allowed_statuses = ['Unpaid', 'Partially Paid', 'Paid'];
+        if (!in_array($new_status, $allowed_statuses)) {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_status_header(400)
+                ->set_output(json_encode(['success' => false, 'message' => 'Invalid status provided.']));
+            return;
+        }
+
+        $this->load->database();
+
+        $data = [
+            'payment_status' => $new_status,
+        ];
+
+        $this->db->where('id', $invoice_id);
+        $this->db->update('invoices', $data);
+
+        if ($this->db->affected_rows() >= 0) {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_status_header(200)
+                ->set_output(json_encode(['success' => true, 'message' => 'Invoice status updated successfully.']));
+        } else {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_status_header(500)
+                ->set_output(json_encode(['success' => false, 'message' => 'Failed to update database.']));
+        }
+    }
+
+    public function download_dealer_invoice($invoice_id)
+    {
+        ob_start();
+
+        if (empty($invoice_id) || !is_numeric($invoice_id)) {
+            ob_end_clean();
+            show_error('Invalid invoice ID.', 404);
+            return;
+        }
+
+        try {
+            require_once APPPATH . 'third_party/dompdf/autoload.inc.php';
+
+            $this->load->database();
+
+            // Fetch invoice details from the 'invoices' table
+            $invoice = $this->db->get_where('invoices', ['id' => $invoice_id])->row();
+
+            // Fetch invoice items and join with 'products' to get book titles
+            $this->db->select('ii.*, p.name AS book_title, ii.price AS unit_price');
+            $this->db->from('invoice_items ii');
+            $this->db->join('products p', 'p.id = ii.product_id', 'inner');
+            $this->db->where('ii.invoice_id', $invoice_id);
+            $items = $this->db->get()->result();
+
+            if (empty($invoice)) {
+                ob_end_clean();
+                show_error('Invoice not found.', 404);
+                return;
+            }
+
+            // Map database columns to view variables
+            $data['invoice'] = (object)[
+                'invoice_number' => $invoice->invoice_number,
+                'invoice_date' => $invoice->invoice_date,
+                'customer_name' => ($invoice->customer_name ?? ''),
+                'address_line1' => $invoice->billing_address1 ?? '',
+                'address_line2' => $invoice->billing_address2 ?? '',
+                'city' => $invoice->city ?? '',
+                'state' => $invoice->state ?? '',
+                'pincode' => $invoice->pincode ?? '',
+                'phone' => $invoice->phone_number ?? '',
+                'email' => $invoice->customer_email ?? '',
+                'payment_status' => $invoice->payment_status,
+                'sub_total' => $invoice->sub_total,
+                'discount_percentage' => $invoice->discount_percentage,
+                'discount_amount' => $invoice->discount_amount,
+                'total_amount' => $invoice->total_amount,
+            ];
+            $data['items'] = $items;
+
+            $options = new Options();
+            $options->set('isHtml5ParserEnabled', true);
+            $options->set('isRemoteEnabled', true);
+            $dompdf = new Dompdf($options);
+
+            $html = $this->load->view('invoices/dealer_invoice', $data, true);
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->render();
+
+            ob_end_clean();
+
+            $action = $this->input->get('action');
+            $filename = 'Invoice-' . $invoice->invoice_number;
+
+            if ($action == 'download') {
+                $dompdf->stream($filename . '.pdf', ['Attachment' => 1]);
+            } else {
+                $dompdf->stream($filename . '.pdf', ['Attachment' => 0]);
+            }
+        } catch (Exception $e) {
+            ob_end_clean();
+            header('Content-Type: text/plain');
+            echo "An error occurred during PDF generation:\n\n";
+            echo "Message: " . $e->getMessage() . "\n";
+            echo "File: " . $e->getFile() . "\n";
+            echo "Line: " . $e->getLine() . "\n";
+            echo "Trace: \n" . $e->getTraceAsString();
+            exit;
+        }
     }
 
     public function dealer_list()

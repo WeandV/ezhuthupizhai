@@ -1,5 +1,5 @@
 <?php $this->load->view('dashboard/sidemenu'); ?>
-<div class="page-content-wrapper">
+<div class="page-content-wrapper border shadow bg-white">
     <div class="page-content">
         <div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
             <div class="breadcrumb-title pe-3">Dashboard</div>
@@ -44,39 +44,44 @@
                                         <td><?= $item->recipient_type; ?></td>
                                         <td><?= $item->customer_name; ?></td>
                                         <td>&#8377; <?= $item->sub_total; ?></td>
-                                        <td>
-                                            <?php
-                                            $status_class = '';
-                                            switch ($item->payment_status) {
-                                                case 'paid':
-                                                    $status_class = 'bg-green-100 text-green-800';
-                                                    break;
-                                                case 'unpaid':
-                                                    $status_class = 'bg-yellow-100 text-yellow-800';
-                                                    break;
-                                                case 'overdue':
-                                                    $status_class = 'bg-red-100 text-red-800';
-                                                    break;
-                                                case 'partially_paid':
-                                                default:
-                                                    $status_class = 'bg-gray-100 text-gray-800';
-                                                    break;
-                                            }
-                                            ?>
-                                            <select class="form-select">
-                                                <option value="unpaid" <?= $item->payment_status == 'unpaid' ? 'selected' : '' ?>>Unpaid</option>
-                                                <option value="partially_paid" <?= $item->payment_status == 'partially_paid' ? 'selected' : '' ?>>Partially Paid</option>
-                                                <option value="paid" <?= $item->payment_status == 'paid' ? 'selected' : '' ?>>Paid</option>
-                                            </select>
+                                        <td style="width:15%;" data-invoice-id="<?= $item->id; ?>">
+                                            <div class="dropdown">
+                                                <?php
+                                                $badge_class = 'bg-light-secondary text-secondary';
+                                                switch ($item->payment_status) {
+                                                    case 'Paid':
+                                                        $badge_class = 'bg-light-success text-success';
+                                                        break;
+                                                    case 'Unpaid':
+                                                        $badge_class = 'bg-light-danger text-danger';
+                                                        break;
+                                                    case 'Partially Paid':
+                                                        $badge_class = 'bg-light-warning text-warning';
+                                                        break;
+                                                    default:
+                                                        $badge_class = 'bg-light-secondary text-secondary';
+                                                        break;
+                                                }
+                                                ?>
+                                                <button class="btn <?= $badge_class; ?> dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <?= ucwords(str_replace('_', ' ', $item->payment_status)); ?>
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li><a class="dropdown-item" href="javascript:void(0)" onclick="updateInvoiceStatus(<?= $item->id; ?>, 'Unpaid')">Unpaid</a></li>
+                                                    <li><a class="dropdown-item" href="javascript:void(0)" onclick="updateInvoiceStatus(<?= $item->id; ?>, 'Partially Paid')">Partially Paid</a></li>
+                                                    <li><a class="dropdown-item" href="javascript:void(0)" onclick="updateInvoiceStatus(<?= $item->id; ?>, 'Paid')">Paid</a></li>
+                                                </ul>
+                                            </div>
                                         </td>
                                         <td class="">
                                             <div class="btn-group d-inline-flex">
-                                                <a href="<?= base_url('dashboard/download_invoice/' . $item->id); ?>" class="btn p-0 me-2" target="_blank">
+                                                <a href="<?= base_url('dashboard/download_dealer_invoice/' . $item->id . '?action=download'); ?>" class="btn p-0 me-2">
                                                     <i class="fa-solid fa-download"></i>
                                                 </a>
-                                                <button type="button" class="btn p-0">
+
+                                                <a href="<?= base_url('dashboard/download_dealer_invoice/' . $item->id); ?>" class="btn p-0" target="_blank">
                                                     <i class="fa-solid fa-eye"></i>
-                                                </button>
+                                                </a>
                                             </div>
                                         </td>
                                         <td>
@@ -95,3 +100,80 @@
     </div>
 </div>
 <div id="snackbox"></div>
+
+<script>
+    function showSnackbox(message, type = 'success') {
+        const snackbox = document.getElementById('snackbox');
+        if (snackbox) {
+            snackbox.textContent = message;
+            snackbox.className = type + ' show';
+
+            setTimeout(() => {
+                snackbox.className = snackbox.className.replace(' show', '');
+            }, 3000);
+        }
+    }
+
+    function updateBadgeClass(button, newStatus) {
+        let newClass = '';
+        switch (newStatus) {
+            case 'Paid':
+                newClass = 'bg-light-success text-success';
+                break;
+            case 'Unpaid':
+                newClass = 'bg-light-danger text-danger';
+                break;
+            case 'Partially Paid':
+                newClass = 'bg-light-warning text-warning';
+                break;
+            default:
+                newClass = 'bg-light-secondary text-secondary';
+                break;
+        }
+
+        button.className = `btn ${newClass} dropdown-toggle`;
+    }
+
+    function updateInvoiceStatus(invoiceId, newStatus) {
+        if (!confirm('Are you sure you want to change the invoice status to ' + newStatus + '?')) {
+            return;
+        }
+
+        const url = "<?= base_url('dashboard/update_invoice_status'); ?>";
+        fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    invoice_id: invoiceId,
+                    payment_status: newStatus
+                }),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(error => {
+                        throw new Error(error.message || 'Something went wrong.');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    const row = document.querySelector(`td[data-invoice-id="${invoiceId}"]`);
+                    const button = row.querySelector('button');
+                    button.textContent = newStatus.replace('_', ' ');
+                    updateBadgeClass(button, newStatus);
+
+                    showSnackbox(data.message, 'success');
+                } else {
+                    showSnackbox('Error: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('AJAX Error:', error);
+                showSnackbox('An error occurred during the update: ' + error.message, 'error');
+            });
+    }
+</script>

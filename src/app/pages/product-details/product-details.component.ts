@@ -1,10 +1,10 @@
 import { Component, OnInit, AfterViewInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProductServiceTsService } from 'src/app/services/product.service.ts.service';
-import { CartService } from 'src/app/services/cart.service.ts.service';
+import { CartService } from 'src/app/services/cart.service';
 import { Product } from 'src/app/models/product.model';
 import { ProductImage } from 'src/app/models/product-image.model';
-import { Subscription, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 

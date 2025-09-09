@@ -8,7 +8,6 @@ import { CheckoutComponent } from './pages/checkout/checkout.component';
 import { OrderConfirmationComponent } from './pages/order-confirmation/order-confirmation.component';
 import { ByobComponent } from './pages/byob/byob.component';
 import { ShopInStoreComponent } from './pages/shop-in-store/shop-in-store.component';
-import { AuthGuard } from './guards/auth.guard';
 import { LoginComponent } from './pages/login/login.component';
 import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
@@ -23,22 +22,27 @@ import { GalleryComponent } from './pages/gallery/gallery.component';
 
 const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
-  { path: 'home', component: HomeComponent },
+  {
+    path: 'home',
+    loadChildren: () =>
+      import('../app/pages/home/home-routing.module').then(m => m.HomeRoutingModule)
+  },
+
   { path: 'shop', component: ShopComponent },
   { path: 'products/:slug', component: ProductDetailsComponent },
-  { path: 'cart', component: CartComponent },
-  { path: 'checkout', component: CheckoutComponent },
-  // {
-  //   path: 'order-confirmation/:orderId',
-  //   component: OrderConfirmationComponent,
-  //   canActivate: [AuthGuard]
-  // },
-
+  // { path: 'cart', component: CartComponent },
+  // { path: 'checkout', component: CheckoutComponent },
+  {
+    path: 'checkout',
+    loadChildren: () => import('../app/pages/checkout/checkout-routing.module').then(m => m.CheckoutRoutingModule)
+  },
+  {
+    path: 'cart',
+    loadChildren: () => import('../app/pages/cart/cart-routing.module').then(m => m.CartRoutingModule)
+  },
   { path: 'international-orders', component: InternationalOrdersComponent },
   { path: 'international-orders/:slug', component: InternationalProductDetailComponent },
-
   { path: 'order-confirmation/:orderId', component: OrderConfirmationComponent },
-
   { path: 'byob', component: ByobComponent },
   { path: 'shop-in-store', component: ShopInStoreComponent },
   { path: 'login', component: LoginComponent },
@@ -49,7 +53,7 @@ const routes: Routes = [
   { path: 'shipping-and-delivery', component: ShippingAndDeliveryComponent },
   { path: 'refund-policy', component: RefundPolicyComponent },
   { path: 'contact', component: ContactComponent },
-  { path: 'gallery', component: GalleryComponent}
+  { path: 'gallery', component: GalleryComponent }
 ];
 
 const routerOptions: ExtraOptions = {

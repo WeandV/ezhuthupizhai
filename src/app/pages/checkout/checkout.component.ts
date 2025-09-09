@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { Observable, Subscription, combineLatest } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { take } from 'rxjs/operators';
-import { CartService } from '../../services/cart.service.ts.service';
+import { CartService } from '../../services/cart.service';
 import { CartItem } from '../../models/cart-item.model';
 import { AppliedCoupon } from '../../models/applied-coupon.model';
 import {

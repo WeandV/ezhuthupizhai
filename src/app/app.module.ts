@@ -6,12 +6,16 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { HeaderComponent } from './header/header.component';
 import { FooterComponent } from './footer/footer.component';
+
 import { HomeComponent } from './pages/home/home.component';
+import { HomeRoutingModule } from './pages/home/home-routing.module';
+
 import { ProductsComponent } from './widgets/products/products.component';
 import { ShopComponent } from './pages/shop/shop.component';
 import { ProductDetailsComponent } from './pages/product-details/product-details.component';
 import { CartComponent } from './pages/cart/cart.component';
 import { CheckoutComponent } from './pages/checkout/checkout.component';
+
 import { OrderConfirmationComponent } from './pages/order-confirmation/order-confirmation.component';
 import { ByobComponent } from './pages/byob/byob.component';
 import { ShopInStoreComponent } from './pages/shop-in-store/shop-in-store.component';
@@ -60,8 +64,10 @@ import { GalleryComponent } from './pages/gallery/gallery.component';
     HttpClientModule,
     FormsModule,
     ReactiveFormsModule,
-    NgxMasonryModule
+    NgxMasonryModule,
 
+    HomeRoutingModule,
+    
   ],
   providers: [],
   bootstrap: [AppComponent]

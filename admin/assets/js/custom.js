@@ -816,5 +816,3 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 });
-
-

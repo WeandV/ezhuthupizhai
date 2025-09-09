@@ -1,13 +1,13 @@
-<aside class="sidebar-wrapper" data-simplebar="true">
-    <div class="sidebar-header">
-        <div>
+<aside class="sidebar-wrapper bg-light" data-simplebar="true">
+    <div class="sidebar-header bg-light">
+        <!-- <div>
             <img src="<?= base_url(); ?>assets/images/favicon.png" class="logo-icon" alt="logo icon">
-        </div>
+        </div> -->
         <div>
             <img src="<?= base_url(); ?>assets/images/logo.png" class="logo-text" alt="logo icon" width="150px">
         </div>
     </div>
-    <ul class="metismenu" id="menu">
+    <ul class="metismenu bg-white border shadow" id="menu" style="border-radius: 20px; margin: 80px 10px 10px;">
         <li>
             <a href="<?= base_url(); ?>dashboard">
                 <div class="parent-icon">
@@ -67,7 +67,7 @@
         </li>
     </ul>
 </aside>
-<header class="top-header">
+<header class="top-header bg-light">
     <nav class="navbar navbar-expand gap-3">
         <div class="toggle-icon">
             <ion-icon name="menu-outline"></ion-icon>
@@ -84,14 +84,14 @@
                 <li class="nav-item dropdown dropdown-user-setting">
                     <a class="nav-link dropdown-toggle dropdown-toggle-nocaret" href="javascript:;" data-bs-toggle="dropdown">
                         <div class="user-setting">
-                            <img src="assets/images/avatars/06.png" class="user-img" alt="">
+                            <img src="<?= base_url();?>assets/images/manobharathi.jpg" class="user-img" alt="">
                         </div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li>
                             <a class="dropdown-item" href="javascript:;">
                                 <div class="d-flex flex-row align-items-center gap-2">
-                                    <img src="assets/images/avatars/06.png" alt="" class="rounded-circle" width="54" height="54">
+                                    <img src="<?= base_url();?>assets/images/manobharathi.jpg" alt="" class="rounded-circle" width="54" height="54">
                                     <div class="">
                                         <h6 class="mb-0 dropdown-user-name">Manobharathi</h6>
                                         <small class="mb-0 dropdown-user-designation text-secondary">CEO and Founder</small>
@@ -113,7 +113,7 @@
                             </a>
                         </li>
                         <li>
-                            <a class="dropdown-item" href="http://localhost:4200/home" target="_blank">
+                            <a class="dropdown-item" href="<?= base_url();?>../" target="_blank">
                                 <div class="d-flex align-items-center">
                                     <div class="">
                                         <ion-icon name="globe-outline"></ion-icon>

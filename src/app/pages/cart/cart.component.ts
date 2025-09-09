@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CartService } from 'src/app/services/cart.service.ts.service';
+import { CartService } from 'src/app/services/cart.service';
 import { CartItem } from 'src/app/models/cart-item.model';
 import { AppliedCoupon } from 'src/app/models/applied-coupon.model';
 import { Observable, Subscription, of, combineLatest } from 'rxjs';

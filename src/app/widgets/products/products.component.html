@@ -27,9 +27,11 @@
                     <div class="shop-card">
                         <a [routerLink]="['/products', slugify(product.name)]" target="_top">
                             <div class="dz-media">
-                                <img [src]="product.thumbnail_image" [alt]="product.name">
+                                <img [src]="product.thumbnail_image" [alt]="product.name" width="400" height="400"
+                                    fetchpriority="high" loading="eager" sizes="(max-width: 768px) 200px, 400px">
                                 <div class="shop-meta">
-                                    <a href="javascript:void(0);" class="btn btn-secondary btn-md btn-rounded d-none d-xl-block"
+                                    <a href="javascript:void(0);"
+                                        class="btn btn-secondary btn-md btn-rounded d-none d-xl-block"
                                         data-bs-toggle="modal" [attr.data-bs-target]="'#quickViewModal_' + product.id">
                                         <i class="fa-solid fa-eye d-md-none d-block"></i>
                                         <span class="d-md-block d-none">Quick View</span>
@@ -95,8 +97,8 @@
                                     <div class="container">
                                         <div class="row align-items-center h-100 bg-light">
                                             <div class="col-xl-6 col-md-6 p-2 d-flex align-items-center">
-                                                <img [src]="product.thumbnail_image || 'https://placehold.co/500x500'"
-                                                    [alt]="product.name" class="w-100 h-100 quickview-image">
+                                                <img [src]="product.thumbnail_image" [alt]="product.name" width="500"
+                                                    height="500" class="w-100 h-100 quickview-image">
                                             </div>
                                             <div class="col-xl-6 col-md-6 px-0 mt-0 bg-light d-flex align-items-center"
                                                 style="min-height: 500px;">

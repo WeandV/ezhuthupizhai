@@ -23,7 +23,7 @@
 	<title>EP Admin Dashboard</title>
 </head>
 
-<body>
+<body class="bg-light">
 	<div class="wrapper">
 		<?php $this->load->view($viewpage); ?>
 		<div class="overlay nav-toggle-icon"></div>
@@ -40,6 +40,7 @@
 	<script src="<?= base_url(); ?>assets/plugins/datatable/js/jquery.dataTables.min.js"></script>
 	<script src="<?= base_url(); ?>assets/plugins/datatable/js/dataTables.bootstrap5.min.js"></script>
 	<script src="<?= base_url(); ?>assets/js/table-datatable.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 	<script src="<?= base_url(); ?>assets/js/index.js"></script>
 	<script src="<?= base_url(); ?>assets/js/main.js"></script>
 	<script>
@@ -49,10 +50,96 @@
 		var updateStockUrl = "<?= site_url("dashboard/update_stock_ajax"); ?>";
 		var checkVendorExistsUrl = "<?= site_url("dashboard/check_vendor_exists"); ?>";
 	</script>
+	<script>
+		document.addEventListener("DOMContentLoaded", function() {
+			// Data from PHP, converted to JavaScript objects
+			const combinedSales = <?= json_encode($combined_sales); ?>;
+			const topProducts = <?= json_encode($top_products); ?>;
+			const statusBreakdown = <?= json_encode($status_breakdown); ?>;
 
+			// --- Chart 1: Daily Revenue ---
+			const salesDates = Object.keys(combinedSales);
+			const salesData = Object.values(combinedSales);
+			const dailyRevenueOptions = {
+				chart: {
+					type: 'line',
+					height: 350
+				},
+				series: [{
+					name: 'Revenue',
+					data: salesData
+				}],
+				xaxis: {
+					categories: salesDates,
+					type: 'datetime'
+				},
+				stroke: {
+					curve: 'smooth'
+				},
+				tooltip: {
+					x: {
+						format: 'dd MMM yyyy'
+					}
+				}
+			};
+			const dailyRevenueChart = new ApexCharts(document.querySelector("#dailyRevenueChart"), dailyRevenueOptions);
+			dailyRevenueChart.render();
+
+			// --- Chart 2: Top Selling Products ---
+			const productNames = topProducts.map(p => p.product_name);
+			const productQuantities = topProducts.map(p => parseInt(p.total_quantity_sold));
+			const topProductsOptions = {
+				chart: {
+					type: 'bar',
+					height: 350
+				},
+				series: [{
+					name: 'Quantity Sold',
+					data: productQuantities
+				}],
+				xaxis: {
+					categories: productNames
+				},
+				dataLabels: {
+					enabled: false
+				},
+				plotOptions: {
+					bar: {
+						horizontal: false
+					}
+				}
+			};
+			const topProductsChart = new ApexCharts(document.querySelector("#topProductsChart"), topProductsOptions);
+			topProductsChart.render();
+
+			// --- Chart 3: Invoice Status Breakdown ---
+			const statusLabels = statusBreakdown.map(s => s.payment_status);
+			const statusCounts = statusBreakdown.map(s => parseInt(s.status_count));
+			const invoiceStatusOptions = {
+				chart: {
+					type: 'donut',
+					height: 350
+				},
+				series: statusCounts,
+				labels: statusLabels,
+				responsive: [{
+					breakpoint: 480,
+					options: {
+						chart: {
+							width: 200
+						}
+					}
+				}],
+				legend: {
+					position: 'bottom'
+				}
+			};
+			const invoiceStatusChart = new ApexCharts(document.querySelector("#invoiceStatusChart"), invoiceStatusOptions);
+			invoiceStatusChart.render();
+		});
+	</script>
 	<script src="<?= base_url('assets/js/custom.js'); ?>"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/js/all.min.js"></script>
-
 </body>
 
 </html>

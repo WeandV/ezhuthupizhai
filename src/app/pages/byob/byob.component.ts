@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ByobService } from 'src/app/services/byob.service';
 import { Router } from '@angular/router';
-import { CartService } from 'src/app/services/cart.service.ts.service';
+import { CartService } from 'src/app/services/cart.service';
 import { Product } from 'src/app/models/product.model';
 
 @Component({
