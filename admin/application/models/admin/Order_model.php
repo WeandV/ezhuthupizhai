@@ -6,6 +6,7 @@ class Order_model extends CI_Model
     public function get_all_orders()
     {
         $this->db->select('id, first_name, last_name, payment_method, final_total, created_at, status');
+        $this->db->order_by('id', 'DESC');
         $query = $this->db->get('orders');
         return $query->result();
     }

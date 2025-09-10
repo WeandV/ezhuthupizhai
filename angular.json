@@ -13,7 +13,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/ezhuthupizhai",
+            "outputPath": "dist/ezhuthupizhai/browser",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": [
@@ -106,6 +106,65 @@
             ],
             "scripts": []
           }
+        },
+        "server": {
+          "builder": "@angular-devkit/build-angular:server",
+          "options": {
+            "outputPath": "dist/ezhuthupizhai/server",
+            "main": "server.ts",
+            "tsConfig": "tsconfig.server.json"
+          },
+          "configurations": {
+            "production": {
+              "buildOptimizer": true,
+              "outputHashing": "media",
+              "optimization": true,
+              "sourceMap": true,
+              "extractLicenses": true,
+              "vendorChunk": false
+            },
+            "development": {
+              "buildOptimizer": false,
+              "optimization": false,
+              "sourceMap": true,
+              "extractLicenses": false,
+              "vendorChunk": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve-ssr": {
+          "builder": "@angular-devkit/build-angular:ssr-dev-server",
+          "configurations": {
+            "development": {
+              "browserTarget": "ezhuthupizhai:build:development",
+              "serverTarget": "ezhuthupizhai:server:development"
+            },
+            "production": {
+              "browserTarget": "ezhuthupizhai:build:production",
+              "serverTarget": "ezhuthupizhai:server:production"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "prerender": {
+          "builder": "@angular-devkit/build-angular:prerender",
+          "options": {
+            "routes": [
+              "/"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "ezhuthupizhai:build:production",
+              "serverTarget": "ezhuthupizhai:server:production"
+            },
+            "development": {
+              "browserTarget": "ezhuthupizhai:build:development",
+              "serverTarget": "ezhuthupizhai:server:development"
+            }
+          },
+          "defaultConfiguration": "production"
         }
       }
     }
