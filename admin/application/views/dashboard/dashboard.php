@@ -1,267 +1,267 @@
-    <?php $this->load->view('dashboard/sidemenu'); ?>
-    <div class="page-content-wrapper border shadow bg-white">
-        <div class="page-content">
-            <div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
-                <div class="breadcrumb-title pe-3">Dashboard</div>
-                <div class="ps-3">
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb mb-0 p-0 align-items-center">
-                            <li class="breadcrumb-item"><a href="javascript:;">
-                                    <ion-icon name="home-outline"></ion-icon>
-                                </a>
-                            </li>
-                            <li class="breadcrumb-item active" aria-current="page">eCommerce</li>
-                        </ol>
-                    </nav>
-                </div>
+<?php $this->load->view('dashboard/sidemenu'); ?>
+<div class="page-content-wrapper border shadow bg-white">
+    <div class="page-content">
+        <div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
+            <div class="breadcrumb-title pe-3">Dashboard</div>
+            <div class="ps-3">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0 p-0 align-items-center">
+                        <li class="breadcrumb-item"><a href="javascript:;">
+                                <ion-icon name="home-outline"></ion-icon>
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">eCommerce</li>
+                    </ol>
+                </nav>
             </div>
+        </div>
 
-            <div class="row">
-                <div class="col">
-                    <div class="card radius-10 bg-custom-gradient">
-                        <div class="card-body">
-                            <div class="d-flex align-items-start gap-2">
-                                <div>
-                                    <p class="mb-0 fs-6 text-white">Total Combined Revenue</p>
-                                </div>
-                                <div class="ms-auto widget-icon-small text-white bg-custom-dark-green">
-                                    <ion-icon name="wallet-outline"></ion-icon>
-                                </div>
+        <div class="row">
+            <div class="col">
+                <div class="card radius-10 bg-custom-gradient">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start gap-2">
+                            <div>
+                                <p class="mb-0 fs-6 text-white">Total Combined Revenue</p>
                             </div>
-                            <div class="d-flex align-items-center mt-3">
-                                <div>
-                                    <h4 class="mb-0 text-white">₹<?= number_format((float)$combined_total_revenue, 2) ?></h4>
-                                </div>
+                            <div class="ms-auto widget-icon-small text-white bg-custom-dark-green">
+                                <ion-icon name="wallet-outline"></ion-icon>
                             </div>
                         </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card radius-10 bg-custom-gradient">
-                        <div class="card-body">
-                            <div class="d-flex align-items-start gap-2">
-                                <div>
-                                    <p class="mb-0 fs-6 text-white">Current Month Total Revenue</p>
-                                </div>
-                                <div class="ms-auto widget-icon-small text-white bg-custom-dark-green">
-                                    <ion-icon name="trending-up-outline"></ion-icon>
-                                </div>
-                            </div>
-                            <div class="d-flex align-items-center mt-3">
-                                <div>
-                                    <h4 class="mb-0 text-white">₹<?= number_format((float)$combined_current_month_revenue, 2) ?></h4>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card radius-10 bg-custom-gradient">
-                        <div class="card-body">
-                            <div class="d-flex align-items-start gap-2">
-                                <div>
-                                    <p class="mb-0 fs-6 text-white">Current Week Total Revenue</p>
-                                </div>
-                                <div class="ms-auto widget-icon-small text-white bg-custom-dark-green">
-                                    <ion-icon name="trending-up-outline"></ion-icon>
-                                </div>
-                            </div>
-                            <div class="d-flex align-items-center mt-3">
-                                <div>
-                                    <h4 class="mb-0 text-white">₹<?= number_format((float)$combined_current_week_revenue, 2) ?></h4>
-                                </div>
+                        <div class="d-flex align-items-center mt-3">
+                            <div>
+                                <h4 class="mb-0 text-white">₹<?= number_format((float)$combined_total_revenue, 2) ?></h4>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <h5 class="mt-4">Website Sales</h5>
-            <hr>
-            <div class="row row-cols-1 row-cols-lg-2 row-cols-xxl-3">
-                <div class="col">
-                    <div class="card radius-10">
-                        <div class="card-body">
-                            <div class="d-flex align-items-start gap-2">
-                                <div>
-                                    <p class="mb-0 fs-6">Total Website Revenue</p>
-                                </div>
-                                <div class="ms-auto widget-icon-small text-white bg-gradient-purple">
-                                    <ion-icon name="wallet-outline"></ion-icon>
-                                </div>
+            <div class="col">
+                <div class="card radius-10 bg-custom-gradient">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start gap-2">
+                            <div>
+                                <p class="mb-0 fs-6 text-white">Current Month Total Revenue</p>
                             </div>
-                            <div class="d-flex align-items-center mt-3">
-                                <div>
-                                    <h4 class="mb-0">₹<?= number_format((float)$total_website_revenue, 2) ?></h4>
-                                </div>
-                                <div class="ms-auto">+6.32%</div>
+                            <div class="ms-auto widget-icon-small text-white bg-custom-dark-green">
+                                <ion-icon name="trending-up-outline"></ion-icon>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center mt-3">
+                            <div>
+                                <h4 class="mb-0 text-white">₹<?= number_format((float)$combined_current_month_revenue, 2) ?></h4>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <div class="col">
-                    <div class="card radius-10">
-                        <div class="card-body">
-                            <div class="d-flex align-items-start gap-2">
-                                <div>
-                                    <p class="mb-0 fs-6">Current Month Website Sales</p>
-                                </div>
-                                <div class="ms-auto widget-icon-small text-white bg-gradient-info">
-                                    <ion-icon name="trending-up-outline"></ion-icon>
-                                </div>
+            </div>
+            <div class="col">
+                <div class="card radius-10 bg-custom-gradient">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start gap-2">
+                            <div>
+                                <p class="mb-0 fs-6 text-white">Current Week Total Revenue</p>
                             </div>
-                            <div class="d-flex align-items-center mt-3">
-                                <div>
-                                    <h4 class="mb-0">₹<?= number_format((float)$current_month_website_revenue, 2) ?></h4>
-                                </div>
+                            <div class="ms-auto widget-icon-small text-white bg-custom-dark-green">
+                                <ion-icon name="trending-up-outline"></ion-icon>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center mt-3">
+                            <div>
+                                <h4 class="mb-0 text-white">₹<?= number_format((float)$combined_current_week_revenue, 2) ?></h4>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <div class="col">
-                    <div class="card radius-10">
-                        <div class="card-body">
-                            <div class="d-flex align-items-start gap-2">
-                                <div>
-                                    <p class="mb-0 fs-6">Current Week Website Sales</p>
-                                </div>
-                                <div class="ms-auto widget-icon-small text-white bg-gradient-success">
-                                    <ion-icon name="trending-up-outline"></ion-icon>
-                                </div>
+        <h5 class="mt-4">Website Sales</h5>
+        <hr>
+        <div class="row row-cols-1 row-cols-lg-2 row-cols-xxl-3">
+            <div class="col">
+                <div class="card radius-10">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start gap-2">
+                            <div>
+                                <p class="mb-0 fs-6">Total Website Revenue</p>
                             </div>
-                            <div class="d-flex align-items-center mt-3">
-                                <div>
-                                    <h4 class="mb-0">₹<?= number_format((float)$current_week_website_revenue, 2) ?></h4>
-                                </div>
+                            <div class="ms-auto widget-icon-small text-white bg-gradient-purple">
+                                <ion-icon name="wallet-outline"></ion-icon>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center mt-3">
+                            <div>
+                                <h4 class="mb-0">₹<?= number_format((float)$total_website_revenue, 2) ?></h4>
+                            </div>
+                            <div class="ms-auto">+6.32%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card radius-10">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start gap-2">
+                            <div>
+                                <p class="mb-0 fs-6">Current Month Website Sales</p>
+                            </div>
+                            <div class="ms-auto widget-icon-small text-white bg-gradient-info">
+                                <ion-icon name="trending-up-outline"></ion-icon>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center mt-3">
+                            <div>
+                                <h4 class="mb-0">₹<?= number_format((float)$current_month_website_revenue, 2) ?></h4>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <h5 class="mt-4">In-Store Sales</h5>
-            <hr>
-            <div class="row row-cols-1 row-cols-lg-2 row-cols-xxl-3">
-                <div class="col">
-                    <div class="card radius-10">
-                        <div class="card-body">
-                            <div class="d-flex align-items-start gap-2">
-                                <div>
-                                    <p class="mb-0 fs-6">Total In-Store Revenue</p>
-                                </div>
-                                <div class="ms-auto widget-icon-small text-white bg-gradient-purple">
-                                    <ion-icon name="wallet-outline"></ion-icon>
-                                </div>
+            <div class="col">
+                <div class="card radius-10">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start gap-2">
+                            <div>
+                                <p class="mb-0 fs-6">Current Week Website Sales</p>
                             </div>
-                            <div class="d-flex align-items-center mt-3">
-                                <div>
-                                    <h4 class="mb-0">₹<?= number_format((float)$total_instore_revenue, 2) ?></h4>
-                                </div>
+                            <div class="ms-auto widget-icon-small text-white bg-gradient-success">
+                                <ion-icon name="trending-up-outline"></ion-icon>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center mt-3">
+                            <div>
+                                <h4 class="mb-0">₹<?= number_format((float)$current_week_website_revenue, 2) ?></h4>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <div class="col">
-                    <div class="card radius-10">
-                        <div class="card-body">
-                            <div class="d-flex align-items-start gap-2">
-                                <div>
-                                    <p class="mb-0 fs-6">Current Month In-Store Sales</p>
-                                </div>
-                                <div class="ms-auto widget-icon-small text-white bg-gradient-info">
-                                    <ion-icon name="trending-up-outline"></ion-icon>
-                                </div>
+        <h5 class="mt-4">In-Store Sales</h5>
+        <hr>
+        <div class="row row-cols-1 row-cols-lg-2 row-cols-xxl-3">
+            <div class="col">
+                <div class="card radius-10">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start gap-2">
+                            <div>
+                                <p class="mb-0 fs-6">Total In-Store Revenue</p>
                             </div>
-                            <div class="d-flex align-items-center mt-3">
-                                <div>
-                                    <h4 class="mb-0">₹<?= number_format((float)$current_month_instore_revenue, 2) ?></h4>
-                                </div>
+                            <div class="ms-auto widget-icon-small text-white bg-gradient-purple">
+                                <ion-icon name="wallet-outline"></ion-icon>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <div class="col">
-                    <div class="card radius-10">
-                        <div class="card-body">
-                            <div class="d-flex align-items-start gap-2">
-                                <div>
-                                    <p class="mb-0 fs-6">Current Week In-Store Sales</p>
-                                </div>
-                                <div class="ms-auto widget-icon-small text-white bg-gradient-success">
-                                    <ion-icon name="trending-up-outline"></ion-icon>
-                                </div>
-                            </div>
-                            <div class="d-flex align-items-center mt-3">
-                                <div>
-                                    <h4 class="mb-0">₹<?= number_format((float)$current_week_instore_revenue, 2) ?></h4>
-                                </div>
+                        <div class="d-flex align-items-center mt-3">
+                            <div>
+                                <h4 class="mb-0">₹<?= number_format((float)$total_instore_revenue, 2) ?></h4>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <h5 class="mt-4">Order Status</h5>
-            <hr>
-            <div class="row row-cols-1 row-cols-lg-2 row-cols-xxl-4">
-                <div class="col">
-                    <div class="card radius-10">
-                        <div class="card-body">
-                            <div class="d-flex align-items-start gap-2">
-                                <div>
-                                    <p class="mb-0 fs-6">Total Orders</p>
-                                </div>
-                                <div class="ms-auto widget-icon-small text-white bg-gradient-danger">
-                                    <ion-icon name="bag-handle-outline"></ion-icon>
-                                </div>
+            <div class="col">
+                <div class="card radius-10">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start gap-2">
+                            <div>
+                                <p class="mb-0 fs-6">Current Month In-Store Sales</p>
                             </div>
-                            <div class="d-flex align-items-center mt-3">
-                                <div>
-                                    <h4 class="mb-0"><?= $total_orders ?></h4>
-                                </div>
+                            <div class="ms-auto widget-icon-small text-white bg-gradient-info">
+                                <ion-icon name="trending-up-outline"></ion-icon>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center mt-3">
+                            <div>
+                                <h4 class="mb-0">₹<?= number_format((float)$current_month_instore_revenue, 2) ?></h4>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="col">
-                    <div class="card radius-10">
-                        <div class="card-body">
-                            <div class="d-flex align-items-start gap-2">
-                                <div>
-                                    <p class="mb-0 fs-6">Processing Orders</p>
-                                </div>
-                                <div class="ms-auto widget-icon-small text-white bg-gradient-danger">
-                                    <ion-icon name="ellipsis-horizontal-circle-outline"></ion-icon>
-                                </div>
+            <div class="col">
+                <div class="card radius-10">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start gap-2">
+                            <div>
+                                <p class="mb-0 fs-6">Current Week In-Store Sales</p>
                             </div>
-                            <div class="d-flex align-items-center mt-3">
-                                <div>
-                                    <h4 class="mb-0"><?= $processed_orders ?></h4>
-                                </div>
+                            <div class="ms-auto widget-icon-small text-white bg-gradient-success">
+                                <ion-icon name="trending-up-outline"></ion-icon>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center mt-3">
+                            <div>
+                                <h4 class="mb-0">₹<?= number_format((float)$current_week_instore_revenue, 2) ?></h4>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <div class="col">
-                    <div class="card radius-10">
-                        <div class="card-body">
-                            <div class="d-flex align-items-start gap-2">
-                                <div>
-                                    <p class="mb-0 fs-6">Shipped Orders</p>
-                                </div>
-                                <div class="ms-auto widget-icon-small text-white bg-gradient-warning">
-                                    <ion-icon name="cube-outline"></ion-icon>
-                                </div>
+        <h5 class="mt-4">Order Status</h5>
+        <hr>
+        <div class="row row-cols-1 row-cols-lg-2 row-cols-xxl-4">
+            <div class="col">
+                <div class="card radius-10">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start gap-2">
+                            <div>
+                                <p class="mb-0 fs-6">Total Orders</p>
                             </div>
-                            <div class="d-flex align-items-center mt-3">
-                                <div>
-                                    <h4 class="mb-0"><?= $shipped_orders ?></h4>
+                            <div class="ms-auto widget-icon-small text-white bg-gradient-danger">
+                                <ion-icon name="bag-handle-outline"></ion-icon>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center mt-3">
+                            <div>
+                                <h4 class="mb-0"><?= $total_orders ?></h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card radius-10">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start gap-2">
+                            <div>
+                                <p class="mb-0 fs-6">Processing Orders</p>
+                            </div>
+                            <div class="ms-auto widget-icon-small text-white bg-gradient-danger">
+                                <ion-icon name="ellipsis-horizontal-circle-outline"></ion-icon>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center mt-3">
+                            <div>
+                                <h4 class="mb-0"><?= $processed_orders ?></h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card radius-10">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start gap-2">
+                            <div>
+                                <p class="mb-0 fs-6">Shipped Orders</p>
+                            </div>
+                            <div class="ms-auto widget-icon-small text-white bg-gradient-warning">
+                                <ion-icon name="cube-outline"></ion-icon>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center mt-3">
+                            <div>
+                                <h4 class="mb-0"><?= $shipped_orders ?></h4>
                             </div>
                         </div>
                     </div>
@@ -474,3 +474,4 @@
             </div>
         </div>
     </div>
+</div>

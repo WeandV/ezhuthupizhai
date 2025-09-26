@@ -23,14 +23,16 @@ class Dashboard extends CI_Controller
         $this->load->model('admin/Inventory_model');
         $this->load->model('admin/Invoice_model');
         $this->load->library('form_validation');
+
+        $this->config->load('shiprocket', TRUE);
+        if (!$this->session->userdata('shiprocket_token') && ENVIRONMENT !== 'testing') {
+            $this->_authenticate_shiprocket();
+        }
     }
 
     public function index()
     {
         $this->load->database();
-
-        // --- Website (E-commerce) Sales Metrics (from 'orders' table) ---
-
         $total_website_revenue_query = $this->db->select_sum('final_total')->get('orders');
         $total_website_revenue = $total_website_revenue_query->row()->final_total ?? 0;
 
@@ -217,7 +219,7 @@ class Dashboard extends CI_Controller
         if (!$this->input->is_ajax_request() || !$this->session->userdata('logged_in')) {
             $this->output
                 ->set_content_type('application/json')
-                ->set_status_header(403) // Forbidden
+                ->set_status_header(403)
                 ->set_output(json_encode(['success' => false, 'message' => 'Unauthorized access.']));
             return;
         }
@@ -230,34 +232,52 @@ class Dashboard extends CI_Controller
         if (empty($order_id) || empty($new_status)) {
             $this->output
                 ->set_content_type('application/json')
-                ->set_status_header(400) // Bad Request
+                ->set_status_header(400)
                 ->set_output(json_encode(['success' => false, 'message' => 'Missing order ID or status.']));
             return;
         }
 
-        $allowed_statuses = ['Processing', 'Shipped', 'Delivered', 'Cancelled', 'On Hold'];
+        $allowed_statuses = [
+            'Processing',
+            'Confirmed',
+            'Pickup Scheduled',
+            'Shipped',
+            'In Transit',
+            'Out For Delivery',
+            'Out For Pickup',
+            'Delivered',
+            'RTO Initiated',
+            'RTO In Transit',
+            'RTO Out For Delivery',
+            'RTO Delivered',
+            'Cancelled',
+            'On Hold',
+            'Delivery Failed'
+        ];
+
         if (!in_array($new_status, $allowed_statuses)) {
             $this->output
                 ->set_content_type('application/json')
-                ->set_status_header(400) // Bad Request
+                ->set_status_header(400)
                 ->set_output(json_encode(['success' => false, 'message' => 'Invalid status provided.']));
             return;
         }
 
         $result = $this->Order_model->update_order_status($order_id, $new_status);
 
-        if ($result) {
+        if ($result || $this->db->affected_rows() === 0) {
             $this->output
                 ->set_content_type('application/json')
-                ->set_status_header(200) // OK
+                ->set_status_header(200)
                 ->set_output(json_encode(['success' => true, 'message' => 'Order status updated successfully.']));
         } else {
             $this->output
                 ->set_content_type('application/json')
-                ->set_status_header(500) // Internal Server Error
+                ->set_status_header(500)
                 ->set_output(json_encode(['success' => false, 'message' => 'Failed to update database.']));
         }
     }
+
 
     public function view_invoice($order_id)
     {
@@ -686,6 +706,8 @@ class Dashboard extends CI_Controller
                 'sub_total' => $invoice->sub_total,
                 'discount_percentage' => $invoice->discount_percentage,
                 'discount_amount' => $invoice->discount_amount,
+                'flat_discount' => $invoice->flat_discount,
+                'delivery_charge' => $invoice->delivery_charge,
                 'total_amount' => $invoice->total_amount,
             ];
             $data['items'] = $items;
@@ -822,5 +844,236 @@ class Dashboard extends CI_Controller
         }
 
         redirect('dealer-list');
+    }
+
+    private function _authenticate_shiprocket()
+    {
+        $email = $this->config->item('shiprocket_email', 'shiprocket');
+        $password = $this->config->item('shiprocket_password', 'shiprocket');
+        $api_url = $this->config->item('shiprocket_api_url', 'shiprocket');
+        $curl = curl_init();
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $api_url . "auth/login",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode([
+                'email' => $email,
+                'password' => $password
+            ]),
+            CURLOPT_HTTPHEADER => ["Content-Type: application/json"]
+        ]);
+
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+        curl_close($curl);
+
+        if ($err) {
+            log_message('error', 'Shiprocket Authentication cURL Error: ' . $err);
+            return false;
+        }
+
+        $result = json_decode($response, true);
+
+        if (isset($result['token'])) {
+            $this->session->set_userdata('shiprocket_token', $result['token']);
+            return true;
+        } else {
+            log_message('error', 'Shiprocket Authentication Failed: ' . print_r($result, true));
+            return false;
+        }
+    }
+
+
+    private function _send_to_shiprocket($invoice_data)
+    {
+        $token = $this->session->userdata('shiprocket_token');
+        $api_url = $this->config->item('shiprocket_api_url', 'shiprocket');
+        $pickup_location_name = $this->config->item('shiprocket_pickup_name', 'shiprocket') ?? 'work';
+
+        if (!$token) {
+            if (!$this->_authenticate_shiprocket()) {
+                return ['status' => 'error', 'message' => 'Shiprocket token not available after re-auth.'];
+            }
+            $token = $this->session->userdata('shiprocket_token');
+        }
+
+        $shiprocket_items = [];
+        $total_weight_kg = 0;
+        $max_dim = ['length' => 0, 'breadth' => 0, 'height' => 0];
+
+        foreach ($invoice_data['items'] as $item) {
+            $selling_price = (float)($item['price_at_order'] ?? 0);
+            $quantity = (int)($item['quantity'] ?? 1);
+            $weight_kg = (float)($item['weight_kg'] ?? 0);
+            $length_cm = (float)($item['length_cm'] ?? 0);
+            $breadth_cm = (float)($item['breadth_cm'] ?? 0);
+            $height_cm = (float)($item['height_cm'] ?? 0);
+
+            $shiprocket_items[] = [
+                'name'      => trim($item['product_name'] ?? 'Product'),
+                'sku'       => trim($item['sku'] ?? 'SKU-NA'),
+                'units'     => $quantity,
+                'selling_price' => $selling_price,
+                'hsn'       => trim($item['hsn'] ?? '')
+            ];
+
+            $total_weight_kg += ($weight_kg * $quantity);
+            $max_dim['length'] = max($max_dim['length'], $length_cm);
+            $max_dim['breadth'] = max($max_dim['breadth'], $breadth_cm);
+            $max_dim['height'] = max($max_dim['height'], $height_cm);
+        }
+
+        $total_weight_kg = max(0.5, round($total_weight_kg, 2));
+        $package_length = max(1.0, round($max_dim['length'], 1));
+        $package_breadth = max(1.0, round($max_dim['breadth'], 1));
+        $package_height = max(1.0, round($max_dim['height'], 1));
+
+        $clean_pincode = preg_replace("/[^0-9]/", "", trim($invoice_data['pincode'] ?? '000000'));
+        $clean_phone = preg_replace("/[^0-9]/", "", trim($invoice_data['phone_number'] ?? '9999999999'));
+
+        $shiprocket_payload = [
+            'order_id'              => trim($invoice_data['invoice_number']),
+            'order_date'            => date('Y-m-d H:i:s', strtotime($invoice_data['created_at'])),
+            'pickup_location'       => $pickup_location_name,
+            'channel_id'            => '8291407',
+            'billing_customer_name' => trim($invoice_data['customer_name'] ?? 'Guest'),
+            'billing_last_name'     => trim($invoice_data['customer_last_name'] ?? '.'),
+            'billing_address'       => trim($invoice_data['billing_address1'] ?? 'NA'),
+            'billing_address_2'     => trim($invoice_data['billing_address2'] ?? ''),
+            'billing_city'          => trim($invoice_data['city'] ?? 'NA'),
+            'billing_pincode'       => $clean_pincode,
+            'billing_state'         => trim($invoice_data['state'] ?? 'NA'),
+            'billing_country'       => 'India',
+            'billing_email'         => trim($invoice_data['customer_email'] ?? 'test@example.com'),
+            'billing_phone'         => $clean_phone,
+            'shipping_customer_name' => trim($invoice_data['customer_name'] ?? 'Guest'),
+            'shipping_last_name'     => trim($invoice_data['customer_last_name'] ?? '.'),
+            'shipping_address'       => trim($invoice_data['billing_address1'] ?? 'NA'),
+            'shipping_address_2'     => trim($invoice_data['billing_address2'] ?? ''),
+            'shipping_city'          => trim($invoice_data['city'] ?? 'NA'),
+            'shipping_pincode'       => $clean_pincode,
+            'shipping_state'         => trim($invoice_data['state'] ?? 'NA'),
+            'shipping_country'       => 'India',
+            'shipping_email'         => trim($invoice_data['customer_email'] ?? 'test@example.com'),
+            'shipping_phone'         => $clean_phone,
+            'shipping_is_billing'   => true,
+            'order_items'           => $shiprocket_items,
+            'payment_method'        => (strtolower($invoice_data['payment_status']) === 'paid' ? 'Prepaid' : 'COD'),
+            'shipping_charges'      => (float)($invoice_data['delivery_charge'] ?? 0.0),
+            'gift_wrap_charges'     => 0,
+            'transaction_charges'   => 0,
+            'total_discount'        => (float)($invoice_data['discount_amount'] ?? 0.0),
+            'sub_total'             => (float)($invoice_data['sub_total'] ?? 0.0),
+            'length'                => $package_length,
+            'breadth'               => $package_breadth,
+            'height'                => $package_height,
+            'weight'                => $total_weight_kg
+        ];
+
+        log_message('error', 'Shiprocket FINAL PAYLOAD for Invoice ' . $invoice_data['id'] . ': ' . json_encode($shiprocket_payload, JSON_PRETTY_PRINT));
+        $curl = curl_init();
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $api_url . "orders/create/adhoc",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($shiprocket_payload),
+            CURLOPT_HTTPHEADER => [
+                "Content-Type: application/json",
+                "Authorization: Bearer " . $token
+            ]
+        ]);
+
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+        curl_close($curl);
+
+        log_message('info', 'Shiprocket API Response for Order ' . $invoice_data['invoice_number'] . ': ' . $response);
+
+
+        if ($err) {
+            log_message('error', 'Shiprocket Order Creation cURL Error for Invoice ' . $invoice_data['id'] . ': ' . $err);
+            return ['status' => 'error', 'message' => 'API connection failed.'];
+        }
+
+        $result = json_decode($response, true);
+        if (isset($result['order_id']) && ($result['status_code'] == 200 || $result['status_code'] == 1)) {
+            $shipment_id = $result['shipment_id'] ?? null;
+            $awb_code = $result['awb_code'] ?? null;
+
+            $this->Invoice_model->update_shiprocket_ids($invoice_data['id'], $shipment_id, $awb_code);
+
+            return [
+                'status' => 'success',
+                'shiprocket_id' => $shipment_id,
+                'awb_code' => $awb_code
+            ];
+        } else {
+            $message = $result['message'] ?? ($result['errors'][0]['message'] ?? 'Unknown Shiprocket API Error.');
+            if (isset($result['errors'])) {
+                $message .= ' | Details: ' . json_encode($result['errors']);
+            }
+            log_message('error', 'Shiprocket API Error for Invoice ' . $invoice_data['id'] . ': ' . $message);
+            return ['status' => 'error', 'message' => $message];
+        }
+    }
+
+    public function send_to_shiprocket()
+    {
+        $this->output->set_content_type('application/json');
+
+        if (!$this->session->userdata('logged_in')) {
+            $this->output->set_status_header(401)->set_output(json_encode(['success' => false, 'message' => 'Unauthorized.']));
+            return;
+        }
+
+        $json_data = file_get_contents('php://input');
+        if (empty($json_data)) {
+            $this->output->set_status_header(400)->set_output(json_encode(['success' => false, 'message' => 'No request body received.']));
+            return;
+        }
+
+        $data = json_decode($json_data, true);
+        $invoice_id = $data['invoice_id'] ?? null;
+
+        if (empty($invoice_id)) {
+            log_message('error', 'Missing Invoice ID. Raw payload: ' . $json_data);
+            $this->output->set_status_header(400)->set_output(json_encode(['success' => false, 'message' => 'Missing Invoice ID.']));
+            return;
+        }
+
+        $invoice_data = $this->Invoice_model->get_full_invoice_details($invoice_id);
+
+        if (!$invoice_data || empty($invoice_data['items'])) {
+            $this->output->set_status_header(404)->set_output(json_encode(['success' => false, 'message' => 'Invoice data not found or no items present.']));
+            return;
+        }
+        if (!empty($invoice_data['shiprocket_id'])) {
+            $this->output->set_output(json_encode([
+                'success' => true,
+                'message' => "This invoice has already been sent to Shiprocket. Shipment ID: " . $invoice_data['shiprocket_id']
+            ]));
+            return;
+        }
+
+        $shiprocket_result = $this->_send_to_shiprocket($invoice_data);
+        if ($shiprocket_result['status'] === 'success') {
+            $this->output->set_output(json_encode([
+                'success' => true,
+                'message' => "Invoice successfully sent to Shiprocket. Shipment ID: " . $shiprocket_result['shiprocket_id']
+            ]));
+        } else {
+            $this->output->set_status_header(500)->set_output(json_encode([
+                'success' => false,
+                'message' => "Failed to send to Shiprocket: " . $shiprocket_result['message']
+            ]));
+        }
+    }
+
+    private function _safe_float_from_string($value, $default = 0.0)
+    {
+        if (empty($value)) return $default;
+        // Strip anything that isn't a digit, dot, or minus sign
+        $clean_value = preg_replace('/[^0-9.]/', '', $value);
+        return is_numeric($clean_value) ? (float)$clean_value : $default;
     }
 }

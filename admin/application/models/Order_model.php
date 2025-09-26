@@ -156,4 +156,38 @@ class Order_model extends CI_Model
         $query = $this->db->get();
         return $query->result_array();
     }
+
+
+    public function update_shiprocket_ids($order_id, $shiprocket_id, $awb_code)
+    {
+        $data = [
+            'shiprocket_id' => $shiprocket_id,
+            'awb_code' => $awb_code
+        ];
+
+        // The provided code assumes $this->db is a valid CodeIgniter DB object.
+        // I will assume it is for this example.
+        $this->db->where('id', $order_id);
+        $updated = $this->db->update('orders', $data);
+
+        if ($updated) {
+            log_message('info', "Order {$order_id} updated with Shiprocket ID: {$shiprocket_id}, AWB: {$awb_code}");
+        } else {
+            // Check the last query to see if the WHERE clause found a match.
+            log_message('error', "Failed to update Order {$order_id} in DB. Last query: " . $this->db->last_query());
+        }
+
+        return $updated;
+    }
+
+    public function get_order($order_id)
+    {
+        return $this->db->get_where('orders', ['id' => $order_id])->row_array();
+    }
+
+    public function update_awb($order_id, $awb_code)
+    {
+        $this->db->where('id', $order_id);
+        return $this->db->update('orders', ['awb_code' => $awb_code]);
+    }
 }

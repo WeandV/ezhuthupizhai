@@ -397,6 +397,8 @@ var PixioCarousel = function () {
 				pagination: {
 					el: ".swiper-pagination-trading",
 				},
+				history: false,         // 🔹 disable history
+				hashNavigation: false,  // 🔹 disable hash navigation
 				breakpoints: {
 					1400: {
 						slidesPerView: 3,

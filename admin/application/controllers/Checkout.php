@@ -2,10 +2,16 @@
 defined('BASEPATH') or exit('No direct script access allowed');
 
 use Razorpay\Api\Api;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
+use Google\Client as Google_Client;
+use Google\Service\Gmail as Google_Service_Gmail;
+use Google\Service\Gmail\Message as Google_Service_Gmail_Message;
 
 class Checkout extends CI_Controller
 {
     private $api;
+    private $shiprocket_token;
 
     public function __construct()
     {
@@ -13,9 +19,11 @@ class Checkout extends CI_Controller
         $this->load->model('Order_model');
         $this->load->model('User_model');
         $this->load->config('razorpay');
+        $this->load->config('shiprocket');
         $this->load->model('Payment_model');
         $this->load->library(['form_validation', 'session', 'email']);
         $this->load->helper(['url', 'form']);
+        $this->email->set_mailtype("html");
 
         require_once APPPATH . '../vendor/autoload.php';
         $this->config->load('email', TRUE);
@@ -33,6 +41,9 @@ class Checkout extends CI_Controller
         header('Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE');
         header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
         header('Access-Control-Allow-Credentials: true');
+        if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+            exit(0);
+        }
 
         if ($this->input->method() === 'options') {
             $this->output->set_status_header(200);
@@ -40,39 +51,123 @@ class Checkout extends CI_Controller
         }
     }
 
-    public function place_order_cod()
+    public function place_order_razorpay()
+    {
+        try {
+            $input = json_decode($this->input->raw_input_stream, true);
+
+            if (empty($input)) {
+                return $this->output
+                    ->set_status_header(400)
+                    ->set_output(json_encode(['success' => false, 'message' => 'No data provided.']));
+            }
+
+            $shippingDetails = $input['shipping_details'] ?? [];
+            $orderSummary    = $input['order_summary'] ?? [];
+            $cartItems       = $input['cart_items'] ?? [];
+
+            if (empty($shippingDetails) || empty($orderSummary)) {
+                return $this->output
+                    ->set_status_header(400)
+                    ->set_output(json_encode(['success' => false, 'message' => 'Missing order details.']));
+            }
+            $delivery_charge = $orderSummary['delivery_charge'] ?? 0;
+            $final_total = ($orderSummary['subtotal_after_discount'] ?? 0) + $delivery_charge;
+            $amount_in_paise = intval(round($final_total * 100));
+            $next_id = $this->db->select_max('id', 'max_id')->get('orders')->row()->max_id;
+            $next_id = $next_id ? $next_id + 1 : 1;
+            $invoice_id = 'INEPWB0' . $next_id;
+            $razorpayOrder = $this->api->order->create([
+                'receipt' => $invoice_id,
+                'amount' => $amount_in_paise,
+                'currency' => $this->config->item('razorpay_currency') ?? 'INR',
+                'payment_capture' => 1,
+                'notes' => [
+                    'app_name'        => 'EP New Website',
+                    'Invoice'        => $invoice_id,
+                    'app_id'          => 'EPNGW001',
+                ]
+            ]);
+            $this->db->insert('razorpay_payments', [
+                'order_id' => 0,
+                'razorpay_order_id' => $razorpayOrder['id'],
+                'amount' => $final_total,
+                'currency' => $this->config->item('razorpay_currency') ?? 'INR',
+                'status' => 'created',
+                'invoice_id' => $invoice_id,
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ]);
+
+            return $this->output
+                ->set_content_type('application/json')
+                ->set_status_header(201)
+                ->set_output(json_encode([
+                    'success' => true,
+                    'message' => 'Razorpay order created successfully.',
+                    'razorpayOrderId' => $razorpayOrder['id'],
+                    'key' => $this->config->item('razorpay_key_id'),
+                    'amount' => $amount_in_paise,
+                    'currency' => $this->config->item('razorpay_currency') ?? 'INR',
+                    'invoice_id' => $invoice_id,
+                    'notes' => $razorpayOrder['notes'],
+                    'name' => "Ezhuthupizhai",
+                    'description' => "Payment for your order",
+                    'prefill' => [
+                        'name' => $shippingDetails['firstName'] . ' ' . ($shippingDetails['lastName'] ?? ''),
+                        'email' => $shippingDetails['email'] ?? '',
+                        'contact' => $shippingDetails['phone'] ?? ''
+                    ]
+                ]));
+        } catch (Exception $e) {
+            log_message('error', 'Razorpay Order Creation Failed: ' . $e->getMessage());
+            return $this->output
+                ->set_content_type('application/json')
+                ->set_status_header(500)
+                ->set_output(json_encode(['success' => false, 'message' => $e->getMessage()]));
+        }
+    }
+
+
+    public function verify_payment()
     {
         $input = json_decode($this->input->raw_input_stream, true);
+        $this->output->set_content_type('application/json');
 
-        if (empty($input)) {
-            $this->output->set_status_header(400)->set_output(json_encode(['success' => false, 'message' => 'No data provided.']));
+        if (empty($input['razorpay_payment_id']) || empty($input['razorpay_order_id']) || empty($input['razorpay_signature'])) {
+            $this->output->set_status_header(400);
+            echo json_encode(['success' => false, 'message' => 'Invalid payment data provided.']);
             return;
         }
 
-        $user_auth_context = $input['user_auth_context'] ?? [];
-        $shippingDetails = $input['shipping_details'] ?? [];
-        $orderSummary = $input['order_summary'] ?? [];
-        $cartItems = $input['cart_items'] ?? [];
-        $agreedToTerms = $input['agreed_to_terms'] ?? false;
-
-        // Server-Side Validation
-        if (empty($cartItems) || !$agreedToTerms) {
-            $this->output->set_status_header(400)->set_output(json_encode(['success' => false, 'message' => 'Validation failed. Please check your cart and terms agreement.']));
-            return;
-        }
+        $attributes = [
+            'razorpay_order_id' => $input['razorpay_order_id'],
+            'razorpay_payment_id' => $input['razorpay_payment_id'],
+            'razorpay_signature' => $input['razorpay_signature']
+        ];
 
         $this->db->trans_begin();
 
         try {
-            $user_id = $this->handleUserAndAddressCreation($user_auth_context, $shippingDetails);
-            if ($user_id === false) {
-                throw new Exception('Failed to identify or create user.');
+            $this->api->utility->verifyPaymentSignature($attributes);
+            $payment = $this->api->payment->fetch($input['razorpay_payment_id']);
+            if ($payment['status'] !== 'captured') {
+                $this->db->trans_rollback();
+                $this->output->set_status_header(400);
+                echo json_encode(['success' => false, 'message' => 'Payment not completed.']);
+                return;
             }
-
-            // --- CHANGE MADE HERE ---
-            // Set the initial status to 'processing' for COD orders, as payment is yet to be made.
+            $razorpayOrder = $this->api->order->fetch($input['razorpay_order_id']);
+            $invoice_id = $razorpayOrder['receipt'] ?? null;
+            $shippingDetails = $input['shipping_details'] ?? [];
+            $orderSummary = $input['order_summary'] ?? [];
+            $cartItems = $input['cart_items'] ?? [];
+            $user_auth_context = $input['user_auth_context'] ?? [];
+            $user_id = $this->handleUserAndAddressCreation($user_auth_context, $shippingDetails);
+            if (!$user_id) throw new Exception('Failed to create user.');
             $orderData = [
                 'user_id' => $user_id,
+                'invoice_id' => $invoice_id,
                 'first_name' => $shippingDetails['firstName'],
                 'last_name' => $shippingDetails['lastName'] ?? null,
                 'email' => $shippingDetails['email'],
@@ -84,7 +179,7 @@ class Checkout extends CI_Controller
                 'zip_code' => $shippingDetails['zipCode'],
                 'country' => $shippingDetails['country'],
                 'order_notes' => $shippingDetails['orderNotes'] ?? null,
-                'payment_method' => 'COD(Not Paid)',
+                'payment_method' => 'Razorpay(Paid)',
                 'subtotal' => $orderSummary['subtotal'],
                 'coupon_discount' => $orderSummary['coupon_discount'],
                 'subtotal_after_discount' => $orderSummary['subtotal_after_discount'],
@@ -92,196 +187,46 @@ class Checkout extends CI_Controller
                 'final_total' => $orderSummary['final_total'],
                 'status' => 'processing',
             ];
-            $order_id = $this->Order_model->insert_order($orderData);
-            if (!$order_id) {
-                throw new Exception('Failed to save order to database.');
-            }
 
+            $order_id = $this->Order_model->insert_order($orderData);
+            if (!$order_id) throw new Exception('Failed to create order.');
             $orderItemsToInsert = $this->prepareOrderItems($cartItems, $order_id);
-            if (!$this->Order_model->insert_order_items($orderItemsToInsert)) {
+            if (empty($orderItemsToInsert) || !$this->Order_model->insert_order_items($orderItemsToInsert)) {
                 throw new Exception('Failed to save order items.');
             }
             $this->updateInventory($orderItemsToInsert);
-
+            $this->Payment_model->update_payment($input['razorpay_order_id'], [
+                'order_id' => $order_id,
+                'razorpay_payment_id' => $input['razorpay_payment_id'],
+                'razorpay_signature' => $input['razorpay_signature'],
+                'status' => 'paid',
+                'invoice_id' => $invoice_id
+            ]);
             $this->db->trans_commit();
+            $order_details = $this->Order_model->get_order_by_id($order_id);
+            $order_items = $this->Order_model->get_order_items($order_id);
+            try {
+                $this->send_to_shiprocket($order_id, $order_details, $order_items);
+            } catch (Exception $e) {
+                log_message('error', $e->getMessage());
+            }
+            $this->_sendOrderConfirmationEmail($order_id, $order_details, $order_items);
+            $this->_sendAdminNewOrderEmail($order_id, $order_details, $order_items);
 
-            // --- THIS IS THE CORRECTED CODE ---
-            // Get the complete order details from the database after a successful transaction
-            $completeOrderData = $this->Order_model->get_order_by_id($order_id);
-            $orderItems = $this->Order_model->get_order_items($order_id);
-
-            // Send email AFTER the transaction is committed
-            $this->_sendOrderConfirmationEmail($order_id, $completeOrderData, $orderItems);
-            // --- END CORRECTED CODE ---
-
-            $this->output->set_content_type('application/json')->set_status_header(201);
-            echo json_encode(['success' => true, 'message' => 'Order placed successfully!', 'order_id' => $order_id]);
+            $this->output->set_status_header(200);
+            echo json_encode(['success' => true, 'message' => 'Payment verified and order created successfully.', 'order_id' => $order_id]);
         } catch (Exception $e) {
             $this->db->trans_rollback();
-            log_message('error', 'COD Order placement failed: ' . $e->getMessage());
-            $this->output->set_content_type('application/json')->set_status_header(500);
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-        }
-    }
-    public function place_order_razorpay()
-    {
-        $input = json_decode($this->input->raw_input_stream, true);
-
-        if (empty($input)) {
-            $this->output->set_status_header(400)->set_output(json_encode(['success' => false, 'message' => 'No data provided.']));
-            return;
-        }
-
-        $orderSummary = $input['order_summary'] ?? [];
-
-        if (empty($orderSummary) || !isset($orderSummary['final_total'])) {
-            $this->output->set_status_header(400)->set_output(json_encode(['success' => false, 'message' => 'Missing order summary or final total.']));
-            return;
-        }
-
-        try {
-            $amount_in_paise = intval($orderSummary['final_total'] * 100);
-            $razorpayOrderData = [
-                'amount' => $amount_in_paise,
-                'currency' => $this->config->item('razorpay_currency'),
-                'payment_capture' => 1
-            ];
-
-            $razorpayOrder = $this->api->order->create($razorpayOrderData);
-
-            $this->output->set_content_type('application/json')->set_status_header(201);
-            echo json_encode([
-                'success' => true,
-                'message' => 'Razorpay order created successfully.',
-                'razorpayOrderId' => $razorpayOrder['id'],
-                'key' => $this->config->item('razorpay_key_id'),
-                'amount' => $amount_in_paise,
-                'currency' => $this->config->item('razorpay_currency'),
-                'name' => "Ezhuthupizhai",
-                'description' => "Payment for your order",
-                'prefill' => [
-                    'name' => $input['shipping_details']['firstName'] . ' ' . ($input['shipping_details']['lastName'] ?? ''),
-                    'email' => $input['shipping_details']['email'],
-                    'contact' => $input['shipping_details']['phone'],
-                ]
-            ]);
-        } catch (Exception $e) {
-            log_message('error', 'Razorpay Order Creation Failed: ' . $e->getMessage());
-            $this->output->set_content_type('application/json')->set_status_header(500);
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-        }
-    }
-    public function verify_payment()
-    {
-        $input = json_decode($this->input->raw_input_stream, true);
-        $this->output->set_content_type('application/json');
-
-        if (!empty($input['razorpay_payment_id']) && !empty($input['razorpay_order_id']) && !empty($input['razorpay_signature'])) {
-            $attributes = [
-                'razorpay_order_id' => $input['razorpay_order_id'],
-                'razorpay_payment_id' => $input['razorpay_payment_id'],
-                'razorpay_signature' => $input['razorpay_signature']
-            ];
-
-            $this->db->trans_begin();
-
-            try {
-                // Step 1: Verify the payment signature with Razorpay's API.
-                // This is the most crucial step for security.
-                $this->api->utility->verifyPaymentSignature($attributes);
-
-                // Step 2: Extract all order data from the frontend payload.
-                // This data is sent by your Angular app's payment handler.
-                $user_auth_context = $input['user_auth_context'] ?? [];
-                $shippingDetails = $input['shipping_details'] ?? [];
-                $orderSummary = $input['order_summary'] ?? [];
-                $cartItems = $input['cart_items'] ?? [];
-
-                // Step 3: Handle user and address creation/lookup.
-                $user_id = $this->handleUserAndAddressCreation($user_auth_context, $shippingDetails);
-                if ($user_id === false) {
-                    throw new Exception('Failed to identify or create user.');
-                }
-
-                // Step 4: Create the new order in the database.
-                // This is the correct place to save the order and order items.
-                // --- NOTE ON ORDER STATUS ---
-                // For Razorpay, the payment has been successfully verified, so the status should be 'paid'.
-                // Setting it to 'processing' could lead to security issues if the payment isn't handled correctly.
-                $orderData = [
-                    'user_id' => $user_id,
-                    'first_name' => $shippingDetails['firstName'],
-                    'last_name' => $shippingDetails['lastName'] ?? null,
-                    'email' => $shippingDetails['email'],
-                    'phone' => $shippingDetails['phone'],
-                    'address1' => $shippingDetails['address1'],
-                    'address2' => $shippingDetails['address2'] ?? null,
-                    'city' => $shippingDetails['city'],
-                    'state' => $shippingDetails['state'],
-                    'zip_code' => $shippingDetails['zipCode'],
-                    'country' => $shippingDetails['country'],
-                    'order_notes' => $shippingDetails['orderNotes'] ?? null,
-                    'payment_method' => 'Razorpay(Paid)',
-                    'subtotal' => $orderSummary['subtotal'],
-                    'coupon_discount' => $orderSummary['coupon_discount'],
-                    'subtotal_after_discount' => $orderSummary['subtotal_after_discount'],
-                    'delivery_charge' => $orderSummary['delivery_charge'],
-                    'final_total' => $orderSummary['final_total'],
-                    'status' => 'processing',
-                ];
-                $order_id = $this->Order_model->insert_order($orderData);
-                if (!$order_id) {
-                    throw new Exception('Failed to save order to database.');
-                }
-
-                // Step 5: Save the order items and update inventory.
-                $orderItemsToInsert = $this->prepareOrderItems($cartItems, $order_id);
-                if (empty($orderItemsToInsert) || !$this->Order_model->insert_order_items($orderItemsToInsert)) {
-                    throw new Exception('No valid cart items or failed to save order items.');
-                }
-                $this->updateInventory($orderItemsToInsert);
-
-                // Step 6: Create a permanent payment record linking to the new order.
-                $this->Payment_model->create_order([
-                    'order_id' => $order_id,
-                    'razorpay_order_id' => $input['razorpay_order_id'],
-                    'razorpay_payment_id' => $input['razorpay_payment_id'],
-                    'razorpay_signature' => $input['razorpay_signature'],
-                    'amount' => $orderSummary['final_total'],
-                    'currency' => $this->config->item('razorpay_currency'),
-                    'status' => 'paid',
-                ]);
-
-                // Step 7: Commit the transaction after all database operations are successful.
-                $this->db->trans_commit();
-
-                // Step 8: Get the complete order details for the email.
-                $order_details = $this->Order_model->get_order_by_id($order_id);
-                $order_items = $this->Order_model->get_order_items($order_id);
-
-                // Step 9: Send the email.
-                $this->_sendOrderConfirmationEmail($order_id, $order_details, $order_items);
-
-                // Step 10: Send a success response back to the frontend.
-                $this->output->set_status_header(200);
-                echo json_encode(['success' => true, 'message' => 'Payment verified and order created successfully.', 'order_id' => $order_id]);
-            } catch (Exception $e) {
-                $this->db->trans_rollback();
-                log_message('error', 'Razorpay Verify Error: ' . $e->getMessage());
-                $this->output->set_status_header(400);
-                echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-            }
-        } else {
+            log_message('error', 'Razorpay Verify Error: ' . $e->getMessage());
             $this->output->set_status_header(400);
-            echo json_encode(['success' => false, 'message' => 'Invalid payment data provided.']);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
         }
     }
+
     private function _sendOrderConfirmationEmail($order_id, $order_details, $order_items)
     {
-        // Require the Google API Client library
         require_once APPPATH . '../vendor/autoload.php';
 
-        // Get access token using the working function you already have
         $accessToken = $this->refreshAccessToken();
 
         if (!$accessToken) {
@@ -289,18 +234,15 @@ class Checkout extends CI_Controller
             return false;
         }
 
-        // Initialize the Gmail API client
         $client = new Google_Client();
         $client->setAccessToken($accessToken);
         $service = new Google_Service_Gmail($client);
 
         try {
-            // Get email details from config
             $from_email = $this->config->item('gmail_email');
             $from_name = $this->config->item('from_name');
             $to_email = $order_details['email'];
 
-            // Prepare data for the view file
             $data = [
                 'order_id' => $order_id,
                 'order_details' => $order_details,
@@ -308,39 +250,31 @@ class Checkout extends CI_Controller
                 'from_email' => $from_email,
             ];
 
-            // Load the view file and get the rendered HTML as a string
             $email_body_html = $this->load->view('emails/order_confirmation', $data, true);
 
-            // Create a plain text version by stripping tags
             $email_body_text = strip_tags(str_replace(['<br>', '<br/>'], "\n", $email_body_html));
             $email_body_text = preg_replace("/\r?\n\r?\n/", "\n\n", $email_body_text);
 
-            // Generate a unique boundary string
             $boundary = uniqid('', true);
 
-            // Construct the full multipart/alternative raw message
             $rawMessage = "From: {$from_name} <{$from_email}>\r\n";
             $rawMessage .= "To: <{$to_email}>\r\n";
             $rawMessage .= "Subject: Order Confirmation #" . $order_id . "\r\n";
             $rawMessage .= "MIME-Version: 1.0\r\n";
             $rawMessage .= "Content-Type: multipart/alternative; boundary=\"$boundary\"\r\n\r\n";
 
-            // Plain text part
             $rawMessage .= "--$boundary\r\n";
             $rawMessage .= "Content-Type: text/plain; charset=UTF-8\r\n";
             $rawMessage .= "Content-Transfer-Encoding: 7bit\r\n\r\n";
             $rawMessage .= $email_body_text . "\r\n\r\n";
 
-            // HTML part
             $rawMessage .= "--$boundary\r\n";
             $rawMessage .= "Content-Type: text/html; charset=UTF-8\r\n";
             $rawMessage .= "Content-Transfer-Encoding: quoted-printable\r\n\r\n";
             $rawMessage .= quoted_printable_encode($email_body_html) . "\r\n\r\n";
 
-            // End boundary
             $rawMessage .= "--$boundary--\r\n";
 
-            // Encode the message and send it
             $mime = rtrim(strtr(base64_encode($rawMessage), '+/', '-_'), '=');
             $message = new Google_Service_Gmail_Message();
             $message->setRaw($mime);
@@ -355,6 +289,67 @@ class Checkout extends CI_Controller
         } catch (Exception $e) {
             $error_message = 'Error sending order confirmation (general): ' . $e->getMessage();
             log_message('error', 'Order Email Error (General): ' . $error_message);
+            return false;
+        }
+    }
+
+    private function _sendAdminNewOrderEmail($order_id, $order_details, $order_items)
+    {
+        require_once APPPATH . '../vendor/autoload.php';
+
+        $accessToken = $this->refreshAccessToken();
+        if (!$accessToken) {
+            log_message('error', 'Admin Email Error: Failed to get Google API access token for order #' . $order_id);
+            return false;
+        }
+
+        $client = new Google_Client();
+        $client->setAccessToken($accessToken);
+        $service = new Google_Service_Gmail($client);
+
+        try {
+            $from_email   = $this->config->item('gmail_email');
+            $from_name    = $this->config->item('from_name');
+            $admin_email  = $this->config->item('admin_email');
+
+            $data = [
+                'order_id'      => $order_id,
+                'order_details' => $order_details,
+                'order_items'   => $order_items,
+                'from_email'    => $from_email,
+            ];
+
+            $email_body_html = $this->load->view('emails/admin_new_order', $data, true);
+
+            $email_body_text = strip_tags(str_replace(['<br>', '<br/>'], "\n", $email_body_html));
+            $boundary = uniqid('', true);
+
+            $rawMessage  = "From: {$from_name} <{$from_email}>\r\n";
+            $rawMessage .= "To: <{$admin_email}>\r\n";
+            $rawMessage .= "Subject: New Order Received #" . $order_id . "\r\n";
+            $rawMessage .= "MIME-Version: 1.0\r\n";
+            $rawMessage .= "Content-Type: multipart/alternative; boundary=\"$boundary\"\r\n\r\n";
+
+            $rawMessage .= "--$boundary\r\n";
+            $rawMessage .= "Content-Type: text/plain; charset=UTF-8\r\n\r\n";
+            $rawMessage .= $email_body_text . "\r\n\r\n";
+
+            $rawMessage .= "--$boundary\r\n";
+            $rawMessage .= "Content-Type: text/html; charset=UTF-8\r\n";
+            $rawMessage .= "Content-Transfer-Encoding: base64\r\n\r\n";
+            $rawMessage .= chunk_split(base64_encode($email_body_html)) . "\r\n\r\n";
+
+            $rawMessage .= "--$boundary--\r\n";
+
+            $mime = rtrim(strtr(base64_encode($rawMessage), '+/', '-_'), '=');
+            $message = new Google_Service_Gmail_Message();
+            $message->setRaw($mime);
+            $service->users_messages->send('me', $message);
+
+            log_message('info', 'Admin notified for new order #' . $order_id);
+            return true;
+        } catch (Exception $e) {
+            log_message('error', 'Admin Email Error: ' . $e->getMessage());
             return false;
         }
     }
@@ -388,7 +383,6 @@ class Checkout extends CI_Controller
         }
     }
 
-
     private function handleUserAndAddressCreation($user_auth_context, $shippingDetails)
     {
         $user_id_from_auth_context = $user_auth_context['user_id'] ?? null;
@@ -402,8 +396,8 @@ class Checkout extends CI_Controller
 
         $common_user_data_from_shipping = [
             'first_name' => $shippingDetails['firstName'] ?? null,
-            'last_name'  => $shippingDetails['lastName'] ?? null,
-            'phone'      => $shippingDetails['phone'] ?? null
+            'last_name' => $shippingDetails['lastName'] ?? null,
+            'phone' => $shippingDetails['phone'] ?? null
         ];
 
         if ($user_id_from_auth_context !== null) {
@@ -442,25 +436,24 @@ class Checkout extends CI_Controller
 
         if ($user_id !== null) {
             $address_to_save_update = [
-                'user_id'    => $user_id,
+                'user_id' => $user_id,
                 'first_name' => $shippingDetails['firstName'],
-                'last_name'  => $shippingDetails['lastName'] ?? null,
-                'phone'      => $shippingDetails['phone'],
-                'email'      => $shippingDetails['email'],
-                'address1'   => $shippingDetails['address1'],
-                'address2'   => $shippingDetails['address2'] ?? null,
-                'city'       => $shippingDetails['city'],
-                'state'      => $shippingDetails['state'],
-                'zip_code'   => $shippingDetails['zipCode'],
-                'country'    => $shippingDetails['country'],
-                'type'       => 'shipping',
+                'last_name' => $shippingDetails['lastName'] ?? null,
+                'phone' => $shippingDetails['phone'],
+                'email' => $shippingDetails['email'],
+                'address1' => $shippingDetails['address1'],
+                'address2' => $shippingDetails['address2'] ?? null,
+                'city' => $shippingDetails['city'],
+                'state' => $shippingDetails['state'],
+                'zip_code' => $shippingDetails['zipCode'],
+                'country' => $shippingDetails['country'],
+                'type' => 'shipping',
                 'is_default_billing' => 0,
                 'is_default_shipping' => 1,
-                'is_active'  => 1
+                'is_active' => 1
             ];
 
             if ($is_address_from_saved_selection && $address_id_from_frontend) {
-                // Do nothing, address is already saved and selected
             } else {
                 if ($address_id_from_frontend) {
                     $this->User_model->update_user_address($address_id_from_frontend, $user_id, $address_to_save_update);
@@ -476,7 +469,6 @@ class Checkout extends CI_Controller
         return $user_id;
     }
 
-    // Private helper method to prepare order items for database insertion
     private function prepareOrderItems($cartItems, $order_id)
     {
         $orderItemsToInsert = [];
@@ -492,19 +484,18 @@ class Checkout extends CI_Controller
             }
 
             $orderItemsToInsert[] = [
-                'order_id'       => $order_id,
-                'product_id'     => $productId,
-                'product_name'   => $productName,
-                'quantity'       => $quantity,
+                'order_id' => $order_id,
+                'product_id' => $productId,
+                'product_name' => $productName,
+                'quantity' => $quantity,
                 'price_at_order' => $priceAtOrder,
-                'total'          => $quantity * $priceAtOrder,
+                'total' => $quantity * $priceAtOrder,
                 'byob_items_list' => $byobItemsList,
             ];
         }
         return $orderItemsToInsert;
     }
 
-    // Private helper method to update inventory stock quantities
     private function updateInventory($orderItemsToInsert)
     {
         foreach ($orderItemsToInsert as $item) {
@@ -573,30 +564,829 @@ class Checkout extends CI_Controller
             'success' => true,
             'message' => 'Order details fetched successfully.',
             'order_details' => [
-                'id'                     => $order['id'],
-                'first_name'             => $order['first_name'],
-                'last_name'              => $order['last_name'],
-                'email'                  => $order['email'],
-                'phone'                  => $order['phone'],
-                'address1'               => $order['address1'],
-                'address2'               => $order['address2'],
-                'city'                   => $order['city'],
-                'state'                  => $order['state'],
-                'zip_code'               => $order['zip_code'],
-                'country'                => $order['country'],
-                'order_notes'            => $order['order_notes'],
-                'payment_method'         => $order['payment_method'],
-                'subtotal'               => floatval($order['subtotal']),
-                'coupon_discount'        => floatval($order['coupon_discount']),
+                'id' => $order['id'],
+                'first_name' => $order['first_name'],
+                'last_name' => $order['last_name'],
+                'email' => $order['email'],
+                'phone' => $order['phone'],
+                'address1' => $order['address1'],
+                'address2' => $order['address2'],
+                'city' => $order['city'],
+                'state' => $order['state'],
+                'zip_code' => $order['zip_code'],
+                'country' => $order['country'],
+                'order_notes' => $order['order_notes'],
+                'payment_method' => $order['payment_method'],
+                'subtotal' => floatval($order['subtotal']),
+                'coupon_discount' => floatval($order['coupon_discount']),
                 'subtotal_after_discount' => floatval($order['subtotal_after_discount']),
-                'delivery_charge'        => floatval($order['delivery_charge']),
-                'final_total'            => floatval($order['final_total']),
-                'status'                 => $order['status'],
-                'created_at'             => $order['created_at'],
-                'order_items'            => $order_items,
+                'delivery_charge' => floatval($order['delivery_charge']),
+                'final_total' => floatval($order['final_total']),
+                'status' => $order['status'],
+                'created_at' => $order['created_at'],
+                'order_items' => $order_items,
             ]
         ];
 
         $this->output->set_status_header(200)->set_output(json_encode($response_data));
+    }
+
+    private function authenticate_shiprocket()
+    {
+        $email = $this->config->item('shiprocket_email');
+        $password = $this->config->item('shiprocket_password');
+
+        // Log the credentials being used (for debugging only, do not do this in production)
+        log_message('info', 'Attempting Shiprocket authentication with email: ' . $email);
+
+        $curl = curl_init();
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $this->config->item('shiprocket_api_url') . "auth/login",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode([
+                'email' => $email,
+                'password' => $password
+            ]),
+            CURLOPT_HTTPHEADER => ["Content-Type: application/json"]
+        ]);
+
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+        curl_close($curl);
+
+        if ($err) {
+            log_message('error', 'Shiprocket cURL Error during authentication: ' . $err);
+            return false;
+        }
+
+        $data = json_decode($response, true);
+
+        if (isset($data['token'])) {
+            $this->shiprocket_token = $data['token'];
+            log_message('info', 'Shiprocket authentication successful. Token received.');
+            return $this->shiprocket_token;
+        } else {
+            // THIS IS THE MOST IMPORTANT DEBUG MESSAGE
+            // The JSON response from Shiprocket will tell you exactly why it failed.
+            log_message('error', 'Shiprocket authentication failed. API Response: ' . json_encode($data));
+            return false;
+        }
+    }
+
+    private function send_to_shiprocket($order_id, $orderData, $orderItems)
+    {
+        if (!$this->shiprocket_token) {
+            $this->authenticate_shiprocket();
+        }
+
+        if (!$this->shiprocket_token) {
+            log_message('error', 'Shiprocket authentication failed. Cannot send order.');
+            return ['status' => 'error', 'message' => 'Shiprocket authentication failed.'];
+        }
+
+        $items = [];
+        $total_order_discount = floatval($orderData['coupon_discount'] ?? 0);
+        $total_order_amount = floatval($orderData['subtotal'] ?? 1);
+
+        $max_length = 0;
+        $max_breadth = 0;
+        $max_height = 0;
+        $total_weight = 0;
+
+        $shiprocket_categories = [
+            'Ezhuthupizhai Giftbox' => 'Special Gift Box',
+            'Ezhuthupizhai Bundle' => 'Combo',
+            'Oru Tea Sapdalama' => 'Poetry',
+            'Kan Simittal' => 'Stories',
+            'Kannamma' => 'Poetry',
+            'Mittaai Payal' => 'Poetry',
+            'Kadha Kelu...' => 'Combo',
+            'Theeraa kaadhal...' => 'Combo',
+            'Nee kavidhaigalaa' => 'Combo',
+            'Highlighter' => 'byob',
+            'Bookmarks (Set of 5)' => 'byob',
+            'Oru Tea Sapdalama Badge' => 'byob',
+            'Message Card' => 'byob',
+            'To-Do List Pad (Set of 2)' => 'byob',
+            '2025 Calendar Card with Stand' => 'byob',
+            'Stickers (Assorted)' => 'byob',
+            'Thank You Card' => 'byob'
+        ];
+
+        foreach ($orderItems as $item) {
+            $product_id = $item['product_id'] ?? null;
+            $product = $this->db->get_where('products', ['id' => $product_id])->row_array();
+            if (!$product) {
+                log_message('warning', 'Product ID ' . $product_id . ' not found in DB. Skipping item.');
+                continue;
+            }
+
+            $sku = !empty($product['sku']) ? $product['sku'] : "SKU" . $product_id;
+            $categories = !empty($product['categories']) ? $product['categories'] : "Default";
+            $length_cm = floatval($product['length_cm'] ?? 30);
+            $breadth_cm = floatval($product['breadth_cm'] ?? 30);
+            $height_cm = floatval($product['height_cm'] ?? 3);
+            $weight_kg = floatval($product['weight_kg'] ?? 0.5);
+
+            $max_length = max($max_length, $length_cm);
+            $max_breadth = max($max_breadth, $breadth_cm);
+            $max_height = max($max_height, $height_cm);
+            $total_weight += $weight_kg * intval($item['quantity'] ?? 1);
+
+            $item_total = floatval($item['price_at_order'] ?? 0) * intval($item['quantity'] ?? 1);
+            $discount = ($total_order_amount > 0) ? ($total_order_discount / $total_order_amount) * $item_total : 0;
+
+            $items[] = [
+                'name' => $item['product_name'] ?? 'Product',
+                'sku' => $sku,
+                'units' => intval($item['quantity'] ?? 1),
+                'selling_price' => floatval($item['price_at_order'] ?? 0),
+                'discount' => round($discount, 2),
+                'tax' => 0,
+                'category' => $categories,
+                'hsn' => '1000'
+            ];
+        }
+
+        $payment_method = strtolower($orderData['payment_method'] ?? 'prepaid');
+        $shiprocket_payment_method = (in_array($payment_method, ['cod', 'cod(not paid)'])) ? 'cod' : 'prepaid';
+
+        $payload = [
+            // "order_id" => "TESTWB" . (string)$order_id,
+            "order_id" => "INEPWB0" . (string)$order_id,
+            "channel_order_id" => (string)$order_id,
+            "channel_id" => 8291407, // channel ID,
+            "order_date" => date("Y-m-d H:i:s"),
+            "pickup_location" => "work",
+            "billing_customer_name" => $orderData['first_name'] ?? 'Customer',
+            "billing_last_name" => $orderData['last_name'] ?? '',
+            "billing_address" => $orderData['address1'] ?? 'Default Address',
+            "billing_city" => $orderData['city'] ?? 'Default City',
+            "billing_pincode" => $orderData['zip_code'] ?? '110001',
+            "billing_state" => $orderData['state'] ?? 'Default State',
+            "billing_country" => "India",
+            "billing_email" => $orderData['email'] ?? 'test@example.com',
+            "billing_phone" => $orderData['phone'] ?? '9876543210',
+            "shipping_charges" => floatval($orderData['delivery_charge'] ?? 0),
+            "shipping_currency" => "INR",
+            "shipping_is_billing" => true,
+            "order_items" => $items,
+            "payment_method" => $shiprocket_payment_method,
+            "sub_total" => floatval($orderData['subtotal_after_discount'] ?? 0),
+            "length" => $max_length > 0 ? $max_length : 30,
+            "breadth" => $max_breadth > 0 ? $max_breadth : 30,
+            "height" => $max_height > 0 ? $max_height : 3,
+            "weight" => $total_weight > 0 ? $total_weight : 0.5,
+        ];
+
+        log_message('info', 'Shiprocket API Payload for Order ' . $order_id . ': ' . json_encode($payload));
+
+        $curl = curl_init();
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $this->config->item('shiprocket_api_url') . "orders/create/adhoc",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_HTTPHEADER => [
+                "Content-Type: application/json",
+                "Authorization: Bearer " . $this->shiprocket_token
+            ]
+        ]);
+
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+        curl_close($curl);
+
+        log_message('info', 'Shiprocket API Response for Order ' . $order_id . ': ' . $response);
+
+        if ($err) {
+            log_message('error', 'Shiprocket cURL Error for Order ' . $order_id . ': ' . $err);
+            return ['status' => 'error', 'message' => 'Shiprocket request error'];
+        }
+
+        $result = json_decode($response, true);
+
+        if ((isset($result['status_code']) && $result['status_code'] == 1) && isset($result['shipment_id'])) {
+            $shipment_id = $result['shipment_id'];
+
+            // 🚫 Do NOT auto-assign AWB here
+            $this->Order_model->update_shiprocket_ids($order_id, $shipment_id, null);
+
+            log_message('info', "Order {$order_id} created in Shiprocket with Shipment ID: {$shipment_id} (AWB not assigned yet)");
+
+            return [
+                'status' => 'success',
+                'shiprocket_id' => $shipment_id,
+                'shiprocket_response' => $result
+            ];
+        } else {
+            $error_message = $result['message'] ?? 'Unknown Shiprocket API error';
+            if (isset($result['errors']) && is_array($result['errors'])) {
+                $error_message .= ' - Errors: ' . json_encode($result['errors']);
+            }
+            log_message('error', 'Shiprocket API Error for Order ' . $order_id . ': ' . $error_message);
+            return ['status' => 'error', 'message' => $error_message];
+        }
+    }
+
+    private function assign_awb($shipment_id, $courier_id)
+    {
+        $url = $this->config->item('shiprocket_api_url') . "courier/assign/awb";
+        $payload = [
+            "shipment_id" => $shipment_id,
+            "courier_id"  => $courier_id
+        ];
+
+        $curl = curl_init();
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_HTTPHEADER => [
+                "Content-Type: application/json",
+                "Authorization: Bearer " . $this->shiprocket_token
+            ]
+        ]);
+
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+        curl_close($curl);
+
+        if ($err) {
+            log_message('error', 'Shiprocket AWB Assignment Error: ' . $err);
+            return ['status' => 'error', 'message' => $err];
+        }
+
+        $result = json_decode($response, true);
+        log_message('info', 'AWB Assignment Response: ' . $response);
+
+        if (isset($result['awb_code']) && !empty($result['awb_code'])) {
+            return [
+                'status' => 'success',
+                'awb_code' => $result['awb_code'],
+                'courier_company_id' => $result['courier_company_id'] ?? null,
+                'courier_name' => $result['courier_name'] ?? null
+            ];
+        }
+
+        return ['status' => 'error', 'message' => $result['message'] ?? 'Unable to assign AWB'];
+    }
+
+    private function get_shiprocket_rates($delivery_postcode, $length, $breadth, $height, $weight, $cod = 1)
+    {
+        if (!$this->shiprocket_token) {
+            $this->authenticate_shiprocket();
+        }
+
+        if (!$this->shiprocket_token) {
+            return [];
+        }
+
+        $pickup_postcode = $this->config->item('shiprocket_pickup_postcode');
+
+        $curl = curl_init();
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $this->config->item('shiprocket_api_url') . "courier/serviceability",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [
+                "Content-Type: application/json",
+                "Authorization: Bearer " . $this->shiprocket_token
+            ],
+            CURLOPT_CUSTOMREQUEST => "GET",
+            CURLOPT_POSTFIELDS => null,
+            CURLOPT_HTTPGET => true,
+        ]);
+
+        $url = $this->config->item('shiprocket_api_url') . "courier/serviceability" .
+            "?pickup_postcode=" . urlencode($pickup_postcode) .
+            "&delivery_postcode=" . urlencode($delivery_postcode) .
+            "&cod=" . intval($cod) .
+            "&weight=" . floatval($weight) .
+            "&length=" . intval($length) .
+            "&breadth=" . intval($breadth) .
+            "&height=" . intval($height);
+
+        curl_setopt($curl, CURLOPT_URL, $url);
+
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+        curl_close($curl);
+
+        if ($err) {
+            log_message('error', 'Shiprocket Rates API Error: ' . $err);
+            return [];
+        }
+
+        $data = json_decode($response, true);
+
+        if (!isset($data['data']['available_courier_companies']) || empty($data['data']['available_courier_companies'])) {
+            return [];
+        }
+
+        // sort by rate ascending
+        usort($data['data']['available_courier_companies'], function ($a, $b) {
+            return $a['rate'] <=> $b['rate'];
+        });
+
+        return $data['data']['available_courier_companies'];
+    }
+
+    public function ready_to_ship($order_id)
+    {
+        $this->output->set_content_type('application/json');
+        $order = $this->Order_model->get_order_by_id($order_id);
+
+        if (!$order || empty($order['shiprocket_id'])) {
+            $this->output->set_status_header(404)->set_output(json_encode([
+                'success' => false,
+                'message' => 'Order not found or Shiprocket ID missing.'
+            ]));
+            return;
+        }
+
+        $shipment_id = $order['shiprocket_id'];
+        $rates = $this->get_shiprocket_rates(
+            $order['zip_code'],
+            30, // Example length
+            30, // Example breadth
+            3,  // Example height
+            0.5 // Example weight
+        );
+
+        if (empty($rates)) {
+            $this->output->set_status_header(404)->set_output(json_encode([
+                'success' => false,
+                'message' => 'No courier services available for this pincode.'
+            ]));
+            return;
+        }
+
+        // Use the cheapest courier
+        $courier_id = $rates[0]['courier_company_id'];
+
+        // Step 3: Call assign_awb with both required parameters
+        $awb_response = $this->assign_awb($shipment_id, $courier_id);
+
+        if ($awb_response['status'] === 'success') {
+            // Step 4: Save AWB in DB and return success
+            $this->Order_model->update_awb($order_id, $awb_response['awb_code']);
+
+            $this->output->set_status_header(200)->set_output(json_encode([
+                'success' => true,
+                'message' => 'AWB assigned successfully',
+                'awb_code' => $awb_response['awb_code']
+            ]));
+        } else {
+            // Step 5: Handle failure
+            $this->output->set_status_header(500)->set_output(json_encode([
+                'success' => false,
+                'message' => 'Failed to assign AWB',
+                'error' => $awb_response['message'] ?? 'Unknown error'
+            ]));
+        }
+    }
+
+    public function get_tracking_by_shipment_id($shiprocket_id = null)
+    {
+        $this->output->set_content_type('application/json');
+
+        if (empty($shiprocket_id) || !is_numeric($shiprocket_id)) {
+            $this->output->set_status_header(400)->set_output(json_encode(['success' => false, 'message' => 'Invalid or missing Shiprocket ID.']));
+            return;
+        }
+
+        try {
+            if (!$this->shiprocket_token) {
+                $this->authenticate_shiprocket();
+            }
+
+            if (!$this->shiprocket_token) {
+                throw new Exception('Shiprocket authentication failed.');
+            }
+
+            $url = $this->config->item('shiprocket_api_url') . "courier/track/shipment/" . $shiprocket_id;
+
+            $curl = curl_init();
+            curl_setopt_array($curl, [
+                CURLOPT_URL => $url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPHEADER => [
+                    "Authorization: Bearer " . $this->shiprocket_token
+                ],
+                CURLOPT_CUSTOMREQUEST => "GET"
+            ]);
+
+            $response = curl_exec($curl);
+            $err = curl_error($curl);
+            curl_close($curl);
+
+            if ($err) {
+                log_message('error', 'Shiprocket Tracking by Shipment ID cURL Error: ' . $err);
+                throw new Exception('Failed to communicate with Shiprocket API.');
+            }
+
+            $data = json_decode($response, true);
+
+            // Find the tracking data based on the dynamic key (the shipment ID)
+            $tracking_data = $data[$shiprocket_id]['tracking_data'] ?? null;
+
+            if ($tracking_data) {
+                // Check for tracking activities
+                if (isset($tracking_data['track_status']) && $tracking_data['track_status'] > 0) {
+                    // Tracking is successful and there is a status
+                    $this->output->set_status_header(200)->set_output(json_encode([
+                        'success' => true,
+                        'message' => 'Tracking details fetched successfully.',
+                        'tracking_details' => $tracking_data
+                    ]));
+                } else {
+                    // Tracking is not available yet, or there's an API-specific error message
+                    $error_message = $tracking_data['error'] ?? 'Tracking details are not yet available. Please try again later.';
+                    $this->output->set_status_header(200)->set_output(json_encode([
+                        'success' => false,
+                        'message' => $error_message
+                    ]));
+                }
+            } else {
+                // No tracking data found in the response at all (e.g., API returned an error message at the top level)
+                $error_message = $data['message'] ?? 'Unable to retrieve tracking data.';
+                $this->output->set_status_header(500)->set_output(json_encode([
+                    'success' => false,
+                    'message' => 'Failed to fetch tracking details from Shiprocket. ' . $error_message
+                ]));
+            }
+        } catch (Exception $e) {
+            log_message('error', 'Tracking by Shipment ID Exception: ' . $e->getMessage());
+            $this->output->set_status_header(500)->set_output(json_encode([
+                'success' => false,
+                'message' => 'An internal error occurred: ' . $e->getMessage()
+            ]));
+        }
+    }
+
+    private function _calculate_order_dimensions_and_weight($cartItems)
+    {
+        $max_length = 0;
+        $max_breadth = 0;
+        $max_height = 0;
+        $total_weight = 0;
+
+        foreach ($cartItems as $item) {
+            $product_id = $item['product_id'] ?? null;
+            if (!$product_id) continue;
+
+            $product = $this->db->get_where('products', ['id' => $product_id])->row_array();
+            if (!$product) continue;
+
+            $length_cm = floatval($product['length_cm'] ?? 0);
+            $breadth_cm = floatval($product['breadth_cm'] ?? 0);
+            $height_cm = floatval($product['height_cm'] ?? 0);
+            $weight_kg = floatval($product['weight_kg'] ?? 0);
+
+            $max_length = max($max_length, $length_cm);
+            $max_breadth = max($max_breadth, $breadth_cm);
+            $max_height = max($max_height, $height_cm);
+            $total_weight += $weight_kg * intval($item['quantity'] ?? 1);
+        }
+
+        return [
+            'length' => $max_length > 0 ? $max_length : 30,
+            'breadth' => $max_breadth > 0 ? $max_breadth : 30,
+            'height' => $max_height > 0 ? $max_height : 3,
+            'weight' => $total_weight > 0 ? $total_weight : 0.5,
+        ];
+    }
+
+    public function get_enabled_couriers()
+    {
+        if (!$this->shiprocket_token) {
+            $this->authenticate_shiprocket();
+        }
+
+        $url = "https://apiv2.shiprocket.in/v1/external/courier/courierListWithCounts?type=active";
+
+        $client = new \GuzzleHttp\Client();
+
+        try {
+            $response = $client->get($url, [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $this->shiprocket_token,
+                    'Content-Type' => 'application/json'
+                ]
+            ]);
+
+            $result = json_decode($response->getBody(), true);
+
+            if (!empty($result)) {
+                echo json_encode([
+                    'status' => 'success',
+                    'enabled_couriers' => $result
+                ]);
+            } else {
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'No enabled couriers found'
+                ]);
+            }
+        } catch (Exception $e) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function get_enabled_courier_charge()
+    {
+        // CORS headers
+        $this->output
+            ->set_header("Access-Control-Allow-Origin: *")
+            ->set_header("Access-Control-Allow-Headers: Content-Type, Authorization")
+            ->set_header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            exit;
+        }
+
+        $json = file_get_contents('php://input');
+        $data = json_decode($json, true);
+
+        $pickup_pincode   = $data['pickup_pincode'] ?? '';
+        $delivery_pincode = $data['delivery_pincode'] ?? '';
+        $weight           = $data['weight'] ?? '';
+        $cod              = $data['cod'] ?? 0;
+
+        if (empty($pickup_pincode) || empty($delivery_pincode) || empty($weight)) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Missing required fields'
+            ]);
+            return;
+        }
+
+        if (!$this->shiprocket_token) {
+            $this->authenticate_shiprocket();
+        }
+
+        $client = new \GuzzleHttp\Client();
+
+        try {
+            // 1. Enabled couriers
+            $enabledResponse = $client->get("https://apiv2.shiprocket.in/v1/external/courier/courierListWithCounts?type=active", [
+                'headers' => ['Authorization' => 'Bearer ' . $this->shiprocket_token]
+            ]);
+            $enabledData = json_decode($enabledResponse->getBody(), true);
+            $enabledCouriers = $enabledData['courier_data'] ?? [];
+
+            // Debugging: if structure unexpected, log it (CodeIgniter)
+            if (!is_array($enabledCouriers)) {
+                log_message('error', 'Unexpected enabled couriers structure: ' . print_r($enabledData, true));
+                $enabledCouriers = [];
+            }
+
+            // 2. Serviceable couriers with rates
+            $url = "https://apiv2.shiprocket.in/v1/external/courier/serviceability/?" .
+                "pickup_postcode={$pickup_pincode}&delivery_postcode={$delivery_pincode}" .
+                "&weight={$weight}&cod={$cod}";
+
+            $serviceResponse = $client->get($url, [
+                'headers' => ['Authorization' => 'Bearer ' . $this->shiprocket_token]
+            ]);
+            $serviceData = json_decode($serviceResponse->getBody(), true);
+            $serviceable = $serviceData['data']['available_courier_companies'] ?? [];
+
+            if (!is_array($serviceable)) {
+                log_message('error', 'Unexpected serviceability structure: ' . print_r($serviceData, true));
+                $serviceable = [];
+            }
+
+            // Build lookup maps
+            $chargesById = [];
+            $chargesByNameLower = [];
+            foreach ($serviceable as $svc) {
+                $svcId = $svc['courier_company_id'] ?? null; // serviceability uses this key
+                $svcName = trim($svc['courier_name'] ?? '');
+                $rate = $svc['rate'] ?? null;
+
+                if ($svcId !== null) {
+                    $chargesById[(int)$svcId] = $rate;
+                }
+                if ($svcName !== '') {
+                    $chargesByNameLower[strtolower($svcName)] = $rate;
+                }
+            }
+
+            // Merge enabled couriers with charges (id-first, then name fallback)
+            $result = [];
+            foreach ($enabledCouriers as $c) {
+                // possible key names in enabled list: 'id', 'courier_company_id', etc.
+                $id = $c['id'] ?? ($c['courier_company_id'] ?? null);
+                // possible name keys
+                $name = $c['courier_name'] ?? ($c['name'] ?? ($c['company_name'] ?? 'Unknown Courier'));
+
+                $deliveryCharge = null;
+                if ($id !== null && array_key_exists((int)$id, $chargesById)) {
+                    $deliveryCharge = $chargesById[(int)$id];
+                } else {
+                    $lcname = strtolower(trim($name));
+                    if ($lcname !== '' && array_key_exists($lcname, $chargesByNameLower)) {
+                        $deliveryCharge = $chargesByNameLower[$lcname];
+                    }
+                }
+
+                $result[] = [
+                    'courier_id'      => $id,
+                    'courier_name'    => $name,
+                    'delivery_charge' => $deliveryCharge // null means not serviceable for this route
+                ];
+            }
+
+            echo json_encode([
+                'status' => 'success',
+                'enabled_couriers' => $result
+            ]);
+        } catch (Exception $e) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function track()
+    {
+        $headers = array_change_key_case($this->input->request_headers(), CASE_LOWER);
+        $receivedToken = $headers['x-api-key'] ?? null;
+        $expectedToken = $this->config->item('shiprocket_token');
+
+        if ($receivedToken !== $expectedToken) {
+            log_message('error', '❌ Invalid webhook token');
+            return $this->output
+                ->set_content_type('application/json')
+                ->set_status_header(401)
+                ->set_output(json_encode(['error' => 'Unauthorized']));
+        }
+        $payload = json_decode($this->input->raw_input_stream, true);
+        log_message('info', '📦 Webhook payload received: ' . json_encode($payload));
+
+        if (empty($payload['order_id'])) {
+            log_message('error', '❌ order_id missing in webhook');
+            return $this->output
+                ->set_content_type('application/json')
+                ->set_status_header(400)
+                ->set_output(json_encode(['error' => 'Invalid payload']));
+        }
+        $order_id = preg_replace('/\D/', '', $payload['order_id']);
+        $shipmentStatusMap = [
+            6  => 'Shipped',
+            7  => 'Delivered',
+            8  => 'Canceled',
+            9  => 'RTO Initiated',
+            10 => 'RTO Delivered',
+            12 => 'Lost',
+            13 => 'Pickup Error',
+            14 => 'RTO Acknowledged',
+            15 => 'Pickup Rescheduled',
+            16 => 'Cancellation Requested',
+            17 => 'Out For Delivery',
+            18 => 'In Transit',
+            19 => 'Out For Pickup',
+            20 => 'Pickup Exception',
+            21 => 'Undelivered',
+            22 => 'Delayed',
+            23 => 'Partial Delivered',
+            24 => 'Destroyed',
+            25 => 'Damaged',
+            26 => 'Fulfilled',
+            27 => 'Pickup Booked',
+            38 => 'Reached Destination Hub',
+            39 => 'Misrouted',
+            40 => 'RTO Not Delivered',
+            41 => 'RTO Out For Delivery',
+            42 => 'Picked Up',
+            43 => 'Self Fulfilled',
+            44 => 'Disposed Off',
+            45 => 'Cancelled Before Dispatched',
+            46 => 'RTO In Transit',
+            47 => 'QC Failed',
+            48 => 'Reached Warehouse',
+            49 => 'Custom Cleared',
+            50 => 'In Flight',
+            51 => 'Handover to Courier',
+            52 => 'Shipment Booked',
+            54 => 'In Transit Overseas',
+            55 => 'Connection Aligned',
+            56 => 'Reached Overseas Warehouse',
+            57 => 'Custom Cleared Overseas',
+            59 => 'Box Packing',
+            60 => 'FC Allocated',
+            61 => 'Picklist Generated',
+            62 => 'Ready To Pack',
+            63 => 'Packed',
+            67 => 'FC Manifest Generated',
+            71 => 'Handover Exception',
+            72 => 'Packed Exception',
+            75 => 'RTO Lock',
+            76 => 'Untraceable',
+            77 => 'Issue Related To Recipient',
+            78 => 'Reached Back At Seller City'
+        ];
+
+        $finalStatusMap = [
+            // Normal flow
+            'PROCESSING'                  => 'Processing',
+            'CONFIRMED'                   => 'Confirmed',
+            'PICKUP BOOKED'               => 'Pickup Scheduled',
+            'OUT FOR PICKUP'              => 'Pickup Scheduled',
+            'PICKUP SCHEDULED'            => 'Pickup Scheduled',
+            'PICKED UP'                   => 'Shipped',
+            'SHIPMENT BOOKED'             => 'Shipped',
+            'SHIPPED'                     => 'Shipped',
+            'IN TRANSIT'                  => 'In Transit',
+            'REACHED DESTINATION HUB'     => 'In Transit',
+            'CONNECTION ALIGNED'          => 'In Transit',
+            'IN FLIGHT'                   => 'In Transit',
+            'IN TRANSIT OVERSEAS'         => 'In Transit',
+            'REACHED OVERSEAS WAREHOUSE'  => 'In Transit',
+            'CUSTOM CLEARED'              => 'In Transit',
+            'CUSTOM CLEARED OVERSEAS'     => 'In Transit',
+            'OUT FOR DELIVERY'            => 'Out For Delivery',
+            'OUT FOR PICKUP'              => 'Out For Pickup',
+            'DELIVERED'                   => 'Delivered',
+            'FULFILLED'                   => 'Delivered',
+            'UNDELIVERED'                 => 'Delivery Failed',
+            'DELAYED'                     => 'Delivery Failed',
+            'PICKUP ERROR'                => 'Delivery Failed',
+            'PICKUP EXCEPTION'            => 'Delivery Failed',
+            'HANDOVER EXCEPTION'          => 'Delivery Failed',
+            'PACKED EXCEPTION'            => 'Delivery Failed',
+            'UNTRACEABLE'                 => 'Delivery Failed',
+            'MISROUTED'                   => 'Delivery Failed',
+            'ISSUE RELATED TO RECIPIENT'  => 'Delivery Failed',
+            'LOST'                        => 'Delivery Failed',
+            'PARTIAL DELIVERED'           => 'Delivery Failed',
+            'DESTROYED'                    => 'Delivery Failed',
+            'DAMAGED'                      => 'Delivery Failed',
+            'DISPOSED OFF'                 => 'Delivery Failed',
+            'QC FAILED'                    => 'Delivery Failed',
+            'RTO INITIATED'               => 'RTO Initiated',
+            'RTO ACKNOWLEDGED'            => 'RTO Initiated',
+            'RTO IN TRANSIT'              => 'RTO In Transit',
+            'RTO OUT FOR DELIVERY'        => 'RTO Out For Delivery',
+            'RTO NOT DELIVERED'           => 'RTO In Transit',
+            'RTO DELIVERED'               => 'RTO Delivered',
+            'RTO LOCK'                    => 'RTO In Transit',
+            'REACHED BACK AT SELLER CITY' => 'RTO In Transit',
+            'CANCELED'                    => 'Cancelled',
+            'CANCELLATION REQUESTED'      => 'Cancelled',
+            'CANCELLED BEFORE DISPATCHED' => 'Cancelled'
+        ];
+
+        $updateData = [
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+
+        if (!empty($payload['awb'])) {
+            $updateData['awb_code'] = $payload['awb'];
+        }
+
+        if (!empty($payload['sr_order_id'])) {
+            $updateData['shiprocket_id'] = $payload['sr_order_id'];
+        }
+        $shipmentStatusId = $payload['shipment_status_id'] ?? null;
+        $shipmentStatus   = $payload['shipment_status'] ?? '';
+        $currentStatus    = $payload['current_status'] ?? '';
+
+        if ($shipmentStatusId && isset($shipmentStatusMap[$shipmentStatusId])) {
+            $rawStatus = $shipmentStatusMap[$shipmentStatusId];
+        } elseif (!empty($currentStatus)) {
+            $rawStatus = ucfirst(strtolower($currentStatus));
+        } else {
+            $rawStatus = 'Processing';
+        }
+        $normalizedKey = strtoupper(trim($rawStatus));
+        $finalStatus = $finalStatusMap[$normalizedKey] ?? 'Processing';
+        $updateData['status'] = $finalStatus;
+
+        $this->db->where('id', $order_id)->update('orders', $updateData);
+
+        if ($this->db->affected_rows() > 0) {
+            log_message(
+                'info',
+                "✅ Order {$order_id} updated. Shiprocket Payload Status Raw: {$rawStatus}, DB Mapping  Status Final: {$finalStatus}. Shiprocket Payload: " . json_encode($payload)
+            );
+        } else {
+            log_message(
+                'error',
+                "❌ Failed to update Order {$order_id}. Shiprocket Payload Status Raw: {$rawStatus}, DB Mapping  Status Final: {$finalStatus}. Shiprocket Payload: " . json_encode($payload)
+            );
+        }
+        return $this->output
+            ->set_content_type('application/json')
+            ->set_status_header(200)
+            ->set_output(json_encode(['success' => true]));
     }
 }

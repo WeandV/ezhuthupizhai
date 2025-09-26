@@ -68,9 +68,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     this.loading = true;
     this.galleryService.getGalleryImages('All').subscribe({
       next: (data: any) => {
-        // Shuffle the array of images
         const shuffledImages = this.shuffleArray(data.data);
-        // Take the first 12 images from the shuffled array
         this.randomImages = shuffledImages.slice(0, 12);
         this.loading = false;
       },
@@ -81,7 +79,6 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  // A utility function to shuffle an array
   private shuffleArray(array: any[]): any[] {
     for (let i = array.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -116,12 +113,12 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
           clickable: true
         },
         breakpoints: {
-          340: { slidesPerView: 1, centeredSlides: true, spaceBetween: 15 },
-          575: { slidesPerView: 1, centeredSlides: false, spaceBetween: 15 },
+          340: { slidesPerView: 1, spaceBetween: 15 },
+          575: { slidesPerView: 1, spaceBetween: 15 },
           600: { slidesPerView: 1, spaceBetween: 15 },
-          767: { slidesPerView: 1.5, spaceBetween: 15 },
-          991: { slidesPerView: 2, spaceBetween: 15 },
-          1024: { slidesPerView: 2, spaceBetween: 15 },
+          767: { slidesPerView: 1, spaceBetween: 15 },
+          991: { slidesPerView: 1, spaceBetween: 15 },
+          1024: { slidesPerView: 1, spaceBetween: 15 },
           1400: { slidesPerView: 1, spaceBetween: 15 },
         }
       });

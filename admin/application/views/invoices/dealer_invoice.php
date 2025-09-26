@@ -349,24 +349,40 @@
                 </table>
             </td>
         </tr>
-        <tr>
-            <td class="totals-section">
-                <table border="0" cellpadding="0" cellspacing="0" role="presentation">
-                    <tr>
-                        <td class="label">Sub Total:</td>
-                        <td>₹ <?= number_format((float)$invoice->total_amount, 2) ?></td>
-                    </tr>
+        <td class="totals-section">
+            <table border="0" cellpadding="0" cellspacing="0" role="presentation">
+                <tr>
+                    <td class="label">Sub Total:</td>
+                    <td>₹ <?= number_format((float)$invoice->total_amount, 2) ?></td>
+                </tr>
+
+                <?php if ((float)$invoice->discount_percentage > 0): ?>
                     <tr>
                         <td class="label">Discount (<?= number_format((float)$invoice->discount_percentage, 2) ?>%):</td>
                         <td>- ₹ <?= number_format((float)$invoice->discount_amount, 2) ?></td>
                     </tr>
-                    <tr class="grand-total">
-                        <td class="label">Grand Total:</td>
-                        <td>₹ <?= number_format((float)$invoice->sub_total, 2) ?></td>
+                <?php endif; ?>
+
+                <?php if ((float)$invoice->flat_discount > 0): ?>
+                    <tr>
+                        <td class="label">Flat Discount:</td>
+                        <td>- ₹ <?= number_format((float)$invoice->flat_discount, 2) ?></td>
                     </tr>
-                </table>
-            </td>
-        </tr>
+                <?php endif; ?>
+
+                <?php if ((float)$invoice->delivery_charge > 0): ?>
+                    <tr>
+                        <td class="label">Delivery Charge:</td>
+                        <td>+ ₹ <?= number_format((float)$invoice->delivery_charge, 2) ?></td>
+                    </tr>
+                <?php endif; ?>
+
+                <tr class="grand-total">
+                    <td class="label">Grand Total:</td>
+                    <td>₹ <?= number_format((float)$invoice->sub_total, 2) ?></td>
+                </tr>
+            </table>
+        </td>
         <tr>
             <td class="notes-section">
                 <h2>Notes</h2>

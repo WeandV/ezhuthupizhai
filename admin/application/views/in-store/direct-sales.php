@@ -54,32 +54,26 @@
                                     </div>
                                     <div class="col-md-6">
                                         <label for="customerEmail" class="form-label">Email</label>
-                                        <!-- Removed readonly attribute to allow manual entry -->
                                         <input type="email" class="form-control" id="customerEmail">
                                     </div>
                                     <div class="col-md-6">
                                         <label for="billingAddress1" class="form-label">Billing Address</label>
-                                        <!-- Removed readonly attribute to allow manual entry -->
                                         <input type="text" class="form-control" id="billingAddress1" placeholder="Address Line 1">
                                     </div>
                                     <div class="col-md-6">
                                         <label for="billingAddress2" class="form-label invisible">Address 2</label>
-                                        <!-- Removed readonly attribute to allow manual entry -->
                                         <input type="text" class="form-control" id="billingAddress2" placeholder="Address Line 2">
                                     </div>
                                     <div class="col-md-6">
                                         <label for="city" class="form-label">City</label>
-                                        <!-- Removed readonly attribute to allow manual entry -->
                                         <input type="text" class="form-control" id="city">
                                     </div>
                                     <div class="col-md-6">
                                         <label for="state" class="form-label">State</label>
-                                        <!-- Removed readonly attribute to allow manual entry -->
                                         <input type="text" class="form-control" id="state">
                                     </div>
                                     <div class="col-md-6">
                                         <label for="pincode" class="form-label">Pincode</label>
-                                        <!-- Removed readonly attribute to allow manual entry -->
                                         <input type="text" class="form-control" id="pincode">
                                     </div>
                                 </div>
@@ -136,7 +130,21 @@
                             <div class="col-12">
                                 <div class="row g-3 justify-content-end">
                                     <div class="col-md-4 text-end">
-                                        <label for="discount" class="form-label">Discount</label>
+                                        <label for="deliveryCharge" class="form-label">Delivery Charge</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">₹</span>
+                                            <input type="number" step="0.01" class="form-control" id="deliveryCharge" value="0.00">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 text-end">
+                                        <label for="flatDiscount" class="form-label">Flat Discount</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">₹</span>
+                                            <input type="number" step="0.01" class="form-control" id="flatDiscount" value="0.00">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 text-end">
+                                        <label for="discount" class="form-label">Discount Percentage</label>
                                         <div class="input-group">
                                             <input type="number" step="0.01" class="form-control" id="discount" value="0.00">
                                             <span class="input-group-text">%</span>
@@ -147,6 +155,10 @@
                                         <div class="d-flex justify-content-end align-items-center">
                                             <span class="text-secondary me-2">Discount:</span>
                                             <span id="discountAmount" class="text-danger">₹ 0.00</span>
+                                        </div>
+                                        <div class="d-flex justify-content-end align-items-center mt-2">
+                                            <span class="me-2">Delivery Charge:</span>
+                                            <span id="deliveryChargeAmount" class="text-primary">₹ 0.00</span>
                                         </div>
                                         <div class="d-flex justify-content-end align-items-center mt-2">
                                             <h5 class="me-2">Sub Total:</h5>

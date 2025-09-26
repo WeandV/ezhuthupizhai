@@ -52,3 +52,12 @@ $route['orders/pending/(:num)'] = 'orders/pending/$1';
 
 $route['checkout/create-order'] = 'checkout/create_order';
 $route['checkout/verify-payment'] = 'checkout/verify_payment';
+
+// for shiprocket integration
+$route['checkout/get_delivery_charge']['post'] = 'checkout/get_delivery_charge';
+$route["checkout/getCourier"]['get'] = 'checkout/get_enabled_couriers';
+$route["checkout/get_enabled_couriers"]['post'] = 'checkout/get_enabled_courier_charge';
+$route['checkout/get_tracking_by_shipment_id/(:num)'] = 'checkout/get_tracking_by_shipment_id/$1';
+$route['orders/ready_to_ship/(:num)'] = 'checkout/ready_to_ship/$1';
+
+$route['checkout/order-track'] = 'checkout/track';

@@ -17,14 +17,12 @@
             </div>
         </div>
     </div>
-
     <div class="content-inner-1">
         <div class="container">
             <div class="row shop-checkout" *ngIf="cartItems.length > 0; else emptyCartContent">
                 <div class="col-xl-7">
                     <div class="login m-b25" *ngIf="!otpVerified">
                         <h4 class="title m-b15">Login</h4>
-                        
                         <form [formGroup]="loginForm" class="row">
                             <div class="col-md-6">
                                 <div class="form-group m-b25">
@@ -43,19 +41,17 @@
                                     <button type="button" class="btn btn-sm btn-primary mt-2"
                                         (click)="verifyOtpAndFetchAddresses()"
                                         [disabled]="loginForm.get('otp')?.invalid || otpVerified">Verify OTP</button>
-                                        <p class="fs-13 text-red">If OTP is not received, please check your Spam or Junk folder.</p>
+                                    <p class="fs-13 text-red">If OTP is not received, please check your Spam or Junk
+                                        folder.</p>
                                 </div>
                             </div>
                         </form>
                     </div>
-
                     <div class="login-status m-b25" *ngIf="otpVerified">
                         <h4 class="title m-b15">Logged In <span class="text-success">({{ loginEmail }})</span></h4>
                         <p>You are logged in. Your saved addresses are available below.</p>
                         <button type="button" class="btn btn-sm btn-outline-danger" (click)="logout()">Logout</button>
                     </div>
-
-
                     <div class="checkout m-b25">
                         <h4 class="title m-b15">Create Account</h4>
                         <div class="row saved-addresses-container"
@@ -71,8 +67,8 @@
                                             <li *ngIf="address.address2">{{ address.address2 }}</li>
                                             <li>{{ address.city }}, {{ address.state }} - {{ address.zip_code }}</li>
                                             <li>{{ address.country }}</li>
-                                            <li>Mo. {{ address.phone }}</li>
-                                            <li>{{ address.email }}</li>
+                                            <li>Phone No: {{ address.phone }}</li>
+                                            <li>Email id: {{ address.email }}</li>
                                         </ul>
                                     </div>
                                     <div class="account-address-bottom">
@@ -107,13 +103,14 @@
                                 <div class="col-md-6">
                                     <div class="form-group m-b25">
                                         <label class="label-title">Phone *</label>
-                                        <input type="tel" formControlName="phone" class="form-control" />
+                                        <input type="tel" formControlName="phone" class="form-control" maxlength="10"
+                                            pattern="[0-9]{10}" />
                                         <div *ngIf="checkoutForm.get('phone')?.invalid && (checkoutForm.get('phone')?.dirty || checkoutForm.get('phone')?.touched)"
                                             class="text-danger mt-1">
                                             <div *ngIf="checkoutForm.get('phone')?.errors?.['required']">Phone number is
                                                 required.</div>
                                             <div *ngIf="checkoutForm.get('phone')?.errors?.['pattern']">Please enter a
-                                                valid 10-15 digit phone number.</div>
+                                                valid 10 digit Indian Phone number.</div>
                                         </div>
                                     </div>
                                 </div>
@@ -187,6 +184,8 @@
                                             class="text-danger mt-1">
                                             <div *ngIf="checkoutForm.get('country')?.errors?.['required']">Country is
                                                 required.</div>
+                                            <div *ngIf="checkoutForm.get('country')?.errors?.['invalidCountry']">We only
+                                                accept orders from India.</div>
                                         </div>
                                     </div>
                                 </div>
@@ -226,7 +225,6 @@
                                     </div>
                                 </div>
                             </ng-container>
-
                             <div class="col-md-12 m-b25 mt-3">
                                 <div class="form-group">
                                     <label class="label-title">Order notes (optional)</label>
@@ -298,7 +296,7 @@
                                     <td class="price">
                                         <ng-container
                                             *ngIf="(cartService.deliveryCharge$ | async) === 0; else showDeliveryCharge">
-                                            <span class="text-success">FREE</span>
+                                            <span class="text-success">Fetching</span>
                                         </ng-container>
                                         <ng-template #showDeliveryCharge>
                                             + &#8377;{{ cartService.deliveryCharge$ | async | number:'1.2-2' }}
@@ -314,9 +312,63 @@
                                 </tr>
                             </tbody>
                         </table>
+                        <hr>
+                        <div class=" mb-3">
+                            <div class="text-left mb-2">
+                                <h5 class="text-black fw-bold mb-0">
+                                    Shipping Method - ( Delivery Charge )
+                                </h5>
+                            </div>
+                            <div class="card-body mt-2">
+                                <div *ngIf="couriersLoading" class="text-center">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p>Loading available couriers...</p>
+                                </div>
+                                <div *ngIf="courierErrorMessage" class="alert alert-danger" role="alert">
+                                    {{ courierErrorMessage }}
+                                </div>
+                                <div *ngIf="!couriersLoading && !courierErrorMessage && enabledCouriers.length > 0">
+                                    <div
+                                        *ngIf="!couriersLoading && !courierErrorMessage && availableCouriers.length > 0">
+                                        <p class="fw-bold mb-0  text-left text-black">Choose your preferred courier:</p>
+
+                                        <div *ngFor="let courier of availableCouriers">
+                                            <label
+                                                class="custom-radio  mt-3 d-flex justify-content-between align-items-center"
+                                                [for]="'courier-' + courier?.courier_id"
+                                                [ngClass]="{'selected-courier': selectedCourier?.courier_id === courier?.courier_id}">
+                                                <div class="d-flex align-items-center">
+                                                    <input class="form-check-input" type="radio" name="courierSelection"
+                                                        [id]="'courier-' + courier?.courier_id"
+                                                        [value]="courier?.courier_name"
+                                                        [checked]="selectedCourier?.courier_id === courier?.courier_id"
+                                                        (change)="onCourierSelected(courier)" />
+                                                    <span class="radio-checkmark  border"></span>
+                                                    <span class="text-color">{{ courier?.courier_name }}</span>
+                                                </div>
+                                                <span class="text-black">₹{{ courier.delivery_charge | number:'1.2-2'
+                                                    }}</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div *ngIf="!couriersLoading && !courierErrorMessage && availableCouriers.length === 0"
+                                        class="alert alert-info mt-3">
+                                        No couriers are currently available for this location.
+                                    </div>
+                                </div>
+                                <div *ngIf="!couriersLoading &&!courierErrorMessage &&enabledCouriers.length === 0"
+                                    class="alert alert-info mt-3">
+                                    No couriers are currently available for this location.
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
                         <div class="accordion dz-accordion accordion-sm" id="accordionPaymentMethods">
                             <div class="accordion-item">
                                 <div class="accordion-header" id="headingRazorpay">
+                                    <h5>Payment Method</h5>
                                     <div class="accordion-button custom-control custom-checkbox border-0"
                                         data-bs-toggle="collapse" data-bs-target="#collapseRazorpay" role="navigation"
                                         aria-expanded="true" aria-controls="collapseRazorpay">
@@ -376,7 +428,7 @@
                             </div>
                         </div>
                         <a href="javascript:void(0);" target="_top" class="btn btn-primary w-100"
-                            [class.disabled]="checkoutForm.invalid || !agreedToTerms || cartItems.length === 0"
+                            [class.disabled]="checkoutForm.invalid || !agreedToTerms || cartItems.length === 0 || selectedCourier === null"
                             (click)="placeOrder()">
                             PLACE ORDER
                         </a>
@@ -396,4 +448,7 @@
             </ng-template>
         </div>
     </div>
+</div>
+<div *ngIf="showLoader" class="overlay-loader">
+    <div class="spinner"></div>
 </div>

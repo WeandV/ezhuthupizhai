@@ -15,14 +15,17 @@ export interface Product {
   thumbnail_image?: string;
   categories: string[];
   tag: string;
+  weight_kg?: number;
+  length_cm?: number;
+  breadth_cm?: number;
+  height_cm?: number;
   created_at?: string;
   updated_at?: string;
 
   images: ProductImage[];
 
-  videos?: ProductVideo[]; 
+  videos?: ProductVideo[];
   options?: { [key: string]: any };
 
   is_international: number;
-
 }

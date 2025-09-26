@@ -7,12 +7,6 @@ class Invoice_model extends CI_Model
         $this->load->database();
     }
 
-    /**
-     * Generates a random, secure password of a given length.
-     *
-     * @param int $length The desired length of the password.
-     * @return string The generated password.
-     */
     private function generate_secure_password($length = 12)
     {
         $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+';
@@ -23,13 +17,6 @@ class Invoice_model extends CI_Model
         return $password;
     }
 
-    /**
-     * Finds a user by their phone number or email.
-     *
-     * @param string $phone The phone number to check.
-     * @param string $email The email to check.
-     * @return bool|object Returns the user object if found, otherwise false.
-     */
     private function find_user_by_contact($phone, $email)
     {
         $this->db->group_start();
@@ -43,13 +30,6 @@ class Invoice_model extends CI_Model
         return false;
     }
 
-    /**
-     * Updates an existing user record.
-     *
-     * @param int $user_id The ID of the user to update.
-     * @param array $data The data to update.
-     * @return bool
-     */
     private function update_user($user_id, $data)
     {
         $this->db->where('id', $user_id);
@@ -57,13 +37,6 @@ class Invoice_model extends CI_Model
         return $this->db->affected_rows() > 0;
     }
 
-    /**
-     * Updates an existing user address record.
-     *
-     * @param int $user_id The ID of the user.
-     * @param array $data The data to update.
-     * @return bool
-     */
     private function update_user_address($user_id, $data)
     {
         $this->db->where('user_id', $user_id);
@@ -71,13 +44,6 @@ class Invoice_model extends CI_Model
         return $this->db->affected_rows() > 0;
     }
 
-    /**
-     * Finds a vendor by their phone number or email.
-     *
-     * @param string $phone The phone number to check.
-     * @param string $email The email to check.
-     * @return bool|object Returns the vendor object if found, otherwise false.
-     */
     private function find_vendor_by_contact($phone, $email)
     {
         $this->db->group_start();
@@ -91,13 +57,6 @@ class Invoice_model extends CI_Model
         return false;
     }
 
-    /**
-     * Updates an existing vendor record.
-     *
-     * @param int $vendor_id The ID of the vendor to update.
-     * @param array $data The data to update.
-     * @return bool
-     */
     private function update_vendor($vendor_id, $data)
     {
         $this->db->where('id', $vendor_id);
@@ -123,33 +82,26 @@ class Invoice_model extends CI_Model
 
     public function save_full_invoice($invoice_data)
     {
-        // Define core required fields
         $required_fields = [
             'invoice_date',
             'invoice_number',
             'invoice_for',
             'customer_name',
             'payment_status',
-            'total_amount',
-            'discount_percentage',
-            'sub_total',
         ];
 
-        // Validate core fields
         foreach ($required_fields as $field) {
             if (!isset($invoice_data[$field]) || empty($invoice_data[$field])) {
                 return ['success' => false, 'message' => "Required field '$field' is missing or empty."];
             }
         }
 
-        // Conditional validation for payment_mode
         if ($invoice_data['payment_status'] !== 'Unpaid') {
             if (!isset($invoice_data['payment_mode']) || empty($invoice_data['payment_mode'])) {
                 return ['success' => false, 'message' => "Required field 'payment_mode' is missing or empty."];
             }
         }
 
-        // Validate invoice items
         if (empty($invoice_data['items'])) {
             return ['success' => false, 'message' => "Invoice must contain at least one item."];
         }
@@ -157,7 +109,6 @@ class Invoice_model extends CI_Model
         $this->db->trans_begin();
 
         try {
-            // Check if the recipient exists and create/update if not
             $recipient_type = $invoice_data['invoice_for'];
             $phone_number = $invoice_data['phone_number'] ?? null;
             $customer_name = $invoice_data['customer_name'] ?? null;
@@ -170,7 +121,7 @@ class Invoice_model extends CI_Model
 
             if ($recipient_type === 'customer') {
                 $user = $this->find_user_by_contact($phone_number, $customer_email);
-                
+
                 $user_data = [
                     'first_name' => $customer_name,
                     'email' => $customer_email,
@@ -186,11 +137,10 @@ class Invoice_model extends CI_Model
                     'city' => $city,
                     'state' => $state,
                     'zip_code' => $pincode,
-                    'country' => 'India', // You might want to get this from the form later
+                    'country' => 'India',
                 ];
 
                 if ($user) {
-                    // User found, update their details
                     $this->update_user($user->id, $user_data);
                     $this->update_user_address($user->id, $address_data);
                 } else {
@@ -199,21 +149,21 @@ class Invoice_model extends CI_Model
                     $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
                     $user_data['password'] = $hashed_password;
                     $user_data['created_at'] = date('Y-m-d H:i:s');
-                    
+
                     $this->db->insert('users', $user_data);
                     $new_user_id = $this->db->insert_id();
 
                     if (!$new_user_id) {
                         throw new Exception('Failed to create new user.');
                     }
-                    
+
                     $address_data['user_id'] = $new_user_id;
                     $address_data['created_at'] = date('Y-m-d H:i:s');
                     $this->db->insert('user_addresses', $address_data);
                 }
             } elseif ($recipient_type === 'vendor') {
                 $vendor = $this->find_vendor_by_contact($phone_number, $customer_email);
-                
+
                 $vendor_data = [
                     'name' => $customer_name,
                     'email' => $customer_email,
@@ -223,14 +173,12 @@ class Invoice_model extends CI_Model
                     'city' => $city,
                     'state' => $state,
                     'pincode' => $pincode,
-                    'country' => 'India', // You might want to get this from the form later
+                    'country' => 'India',
                 ];
 
                 if ($vendor) {
-                    // Vendor found, update their details
                     $this->update_vendor($vendor->id, $vendor_data);
                 } else {
-                    // New vendor, create them
                     $vendor_data['created_at'] = date('Y-m-d H:i:s');
                     $this->db->insert('vendors', $vendor_data);
                 }
@@ -249,11 +197,13 @@ class Invoice_model extends CI_Model
                 'state' => $invoice_data['state'] ?? null,
                 'pincode' => $invoice_data['pincode'] ?? null,
                 'payment_status' => $invoice_data['payment_status'],
-                'payment_mode' => $invoice_data['payment_mode'],
+                'payment_mode' => $invoice_data['payment_mode'] ?? null,
                 'total_amount' => $invoice_data['total_amount'],
                 'discount_percentage' => $invoice_data['discount_percentage'],
-                'discount_amount' => $invoice_data['discount_amount'] ?? 0.00,
+                'flat_discount' => $invoice_data['flat_discount'],
+                'delivery_charge' => $invoice_data['delivery_charge'],
                 'sub_total' => $invoice_data['sub_total'],
+                'discount_amount' => $invoice_data['discount_amount'], // Added this line
                 'created_at' => date('Y-m-d H:i:s'),
             ];
 
@@ -270,7 +220,7 @@ class Invoice_model extends CI_Model
                 $quantity = $item['quantity'] ?? 0;
                 $price = $item['price'] ?? 0.00;
                 $total = $item['total'] ?? 0.00;
-                
+
                 if (!$product_id || !$quantity) {
                     continue;
                 }
@@ -308,7 +258,7 @@ class Invoice_model extends CI_Model
                         $item_id = $component->item_id;
                         $component_quantity = $component->quantity;
                         $total_quantity_to_decrement = $quantity * $component_quantity;
-                        
+
                         $this->db->set('stock_quantity', 'stock_quantity - ' . $total_quantity_to_decrement, FALSE);
                         $this->db->where('item_id', $item_id);
                         $result = $this->db->update('inventory');
@@ -319,7 +269,7 @@ class Invoice_model extends CI_Model
                     }
                 }
             }
-            
+
             $this->db->insert_batch('invoice_items', $invoice_items_data);
 
             if ($this->db->trans_status() === FALSE) {
@@ -373,6 +323,76 @@ class Invoice_model extends CI_Model
     {
         $this->db->where('id', $id);
         $this->db->update('vendors', $data);
+
+        return $this->db->affected_rows() > 0;
+    }
+
+    public function get_full_invoice_details($invoice_id)
+    {
+        $invoice = $this->db->get_where('invoices', ['id' => $invoice_id])->row_array();
+
+        if (!$invoice) {
+            return null;
+        }
+
+        $this->db->where('invoice_id', $invoice_id);
+        $items = $this->db->get('invoice_items')->result_array();
+
+        foreach ($items as &$item) {
+            $product = $this->db
+                ->select('name, sku, length_cm, breadth_cm, height_cm, weight_kg, categories')
+                ->get_where('products', ['id' => $item['product_id']])
+                ->row_array();
+
+            // Prepare item data structure to match what the controller's private send_to_shiprocket expects
+            $item['product_name'] = $product['name'] ?? 'Product';
+            $item['sku'] = $product['sku'] ?? 'SKU-NA';
+            $item['length_cm'] = $product['length_cm'] ?? 30; // Default size
+            $item['breadth_cm'] = $product['breadth_cm'] ?? 30;
+            $item['height_cm'] = $product['height_cm'] ?? 3;
+            $item['weight_kg'] = $product['weight_kg'] ?? 0.5;
+            $item['categories'] = $product['categories'] ?? 'Default';
+            $item['price_at_order'] = $item['price'];
+        }
+        unset($item);
+        $invoice['items'] = $items;
+        return $invoice;
+    }
+
+    public function update_shiprocket_ids($invoice_id, $shipment_id, $awb_code)
+    {
+        $data = array(
+            'shiprocket_id' => $shipment_id,
+            'awb_code' => $awb_code,
+            'shipment_status' => 'Order Created',
+        );
+        $this->db->where('id', $invoice_id);
+        return $this->db->update('invoices', $data);
+    }
+
+    public function update_awb($invoice_id, $awb_code)
+    {
+        $data = [
+            'awb_code' => $awb_code,
+            'shipment_status' => 'Ready to Ship',
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+
+        $this->db->where('id', $invoice_id);
+        $this->db->update('invoices', $data);
+
+        return $this->db->affected_rows() > 0;
+    }
+
+    public function update_shipment_status($invoice_id, $status)
+    {
+        $data = [
+            'shipment_status' => $status,
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+
+        $this->db->where('id', $invoice_id);
+        $this->db->update('invoices', $data);
 
         return $this->db->affected_rows() > 0;
     }

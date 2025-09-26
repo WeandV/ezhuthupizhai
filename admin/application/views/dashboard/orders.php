@@ -19,32 +19,65 @@
             </div>
         </div>
         <div class="container-fluid">
+            <div class="row mb-3 justify-content-end">
+                <div class="col-md-3">
+                    <select id="orderStatusFilter" class="form-select">
+                        <option value="">-- Filter by Status --</option>
+                        <?php
+                        $statuses = [
+                            'Processing',
+                            'Confirmed',
+                            'Pickup Scheduled',
+                            'Shipped',
+                            'In Transit',
+                            'Out For Delivery',
+                            'Out For Pickup',
+                            'Delivered',
+                            'RTO Initiated',
+                            'RTO In Transit',
+                            'RTO Out For Delivery',
+                            'RTO Delivered',
+                            'Cancelled',
+                            'On Hold',
+                            'Delivery Failed'
+                        ];
+                        foreach ($statuses as $status) {
+                            echo "<option value=\"$status\">$status</option>";
+                        }
+                        ?>
+                    </select>
+                </div>
+            </div>
             <div class="card shadow-none">
                 <div class="card-body">
-                    <div class="table-responsive mt-2">
-                        <table class="table align-middle mb-0" style="table-layout: auto;">
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0" style="table-layout: fixed;">
                             <thead class="table-light">
                                 <tr>
-                                    <th>id</th>
-                                    <th>Name</th>
-                                    <th>Payment Method</th>
-                                    <th>Amount</th>
-                                    <th>Date</th>
-                                    <th>Order Status</th>
-                                    <th>View Order</th>
-                                    <th>View</th>
+                                    <th style="width: 10%;">Order ID</th>
+                                    <th style="width: 20%;">Name</th>
+                                    <!-- <th style="width: 10%;">Payment Method</th> -->
+                                    <th style="width: 10%;">Amount</th>
+                                    <th style="width: 10%;">Date</th>
+                                    <th style="width: 10%;">Time</th>
+                                    <th style="width: 14%;">Order Status</th>
+                                    <th style="width: 10%;" class="text-end">View Order</th>
+                                    <th style="width: 10%;" class="text-end">View</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php if ($orders) : ?>
                                     <?php foreach ($orders as $order) : ?>
                                         <tr>
-                                            <td><?= $order->id; ?></td>
-                                            <td class="text-capitalize"><?= $order->first_name . ' ' . $order->last_name; ?></td>
-                                            <td><?= $order->payment_method; ?></td>
+                                            <td>#<?= $order->invoice_id; ?></td>
+                                            <td class="text-capitalize text-truncate" style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                <?= $order->first_name . ' ' . $order->last_name; ?>
+                                            </td>
+                                            <!-- <td><?= $order->payment_method; ?></td> -->
                                             <td>&#8377; <?= number_format($order->final_total, 2); ?></td>
                                             <td><?= date('d M Y', strtotime($order->created_at)); ?></td>
-                                            <td style="width: 15%;">
+                                            <td><?= date('h:i A', strtotime($order->created_at)); ?></td>
+                                            <td>
                                                 <div class="dropdown">
                                                     <?php
                                                     $badge_class = 'bg-light-secondary text-secondary';
@@ -52,17 +85,47 @@
                                                         case 'Processing':
                                                             $badge_class = 'bg-light-primary text-primary';
                                                             break;
-                                                        case 'Shipped':
+                                                        case 'Confirmed':
                                                             $badge_class = 'bg-light-info text-info';
                                                             break;
+                                                        case 'Pickup Scheduled':
+                                                            $badge_class = 'bg-light-warning text-warning';
+                                                            break;
+                                                        case 'Shipped':
+                                                            $badge_class = 'bg-light-secondary text-secondary';
+                                                            break;
+                                                        case 'In Transit':
+                                                            $badge_class = 'bg-light-info text-info';
+                                                            break;
+                                                        case 'Out For Delivery':
+                                                            $badge_class = 'bg-light-pink text-pink';
+                                                            break;
+                                                        case 'Out For Pickup':
+                                                            $badge_class = 'bg-light-teal text-teal';
+                                                            break;
                                                         case 'Delivered':
+                                                            $badge_class = 'bg-light-success text-success';
+                                                            break;
+                                                        case 'RTO Initiated':
+                                                            $badge_class = 'bg-light-warning text-warning';
+                                                            break;
+                                                        case 'RTO In Transit':
+                                                            $badge_class = 'bg-light-info text-info';
+                                                            break;
+                                                        case 'RTO Out For Delivery':
+                                                            $badge_class = 'bg-light-pink text-pink';
+                                                            break;
+                                                        case 'RTO Delivered':
                                                             $badge_class = 'bg-light-success text-success';
                                                             break;
                                                         case 'Cancelled':
                                                             $badge_class = 'bg-light-danger text-danger';
                                                             break;
                                                         case 'On Hold':
-                                                            $badge_class = 'bg-light-warning text-warning';
+                                                            $badge_class = 'bg-light-secondary text-secondary';
+                                                            break;
+                                                        case 'Delivery Failed':
+                                                            $badge_class = 'bg-light-danger text-danger';
                                                             break;
                                                     }
                                                     ?>
@@ -70,21 +133,38 @@
                                                         <?= $order->status; ?>
                                                     </button>
                                                     <ul class="dropdown-menu">
-                                                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="updateOrderStatus(<?= $order->id; ?>, 'Processing')">Processing</a></li>
-                                                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="updateOrderStatus(<?= $order->id; ?>, 'Shipped')">Shipped</a></li>
-                                                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="updateOrderStatus(<?= $order->id; ?>, 'Delivered')">Delivered</a></li>
-                                                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="updateOrderStatus(<?= $order->id; ?>, 'Cancelled')">Cancelled</a></li>
-                                                        <li><a class="dropdown-item" href="javascript:void(0)" onclick="updateOrderStatus(<?= $order->id; ?>, 'On Hold')">On Hold</a></li>
+                                                        <?php
+                                                        $statuses = [
+                                                            'Processing',
+                                                            'Confirmed',
+                                                            'Pickup Scheduled',
+                                                            'Shipped',
+                                                            'In Transit',
+                                                            'Out For Delivery',
+                                                            'Out For Pickup',
+                                                            'Delivered',
+                                                            'RTO Initiated',
+                                                            'RTO In Transit',
+                                                            'RTO Out For Delivery',
+                                                            'RTO Delivered',
+                                                            'Cancelled',
+                                                            'On Hold',
+                                                            'Delivery Failed'
+                                                        ];
+                                                        foreach ($statuses as $status) {
+                                                            echo '<li><a class="dropdown-item" href="javascript:void(0)" onclick="updateOrderStatus(' . $order->id . ', \'' . $status . '\')">' . $status . '</a></li>';
+                                                        }
+                                                        ?>
                                                     </ul>
                                                 </div>
                                             </td>
-                                            <td class="text-center">
+                                            <td class="text-end">
                                                 <a href="<?= base_url('ecommerce/invoice/' . $order->id); ?>" class=" btn btn-sm btn-outline-primary">
                                                     View
                                                 </a>
                                             </td>
-                                            <td class="">
-                                                <div class="text-center d-flex justify-content-center align-items-center gap-2">
+                                            <td>
+                                                <div class="text-center d-flex justify-content-end align-items-center gap-2">
                                                     <a href="<?= base_url('view-shipping_label/' . $order->id); ?>" target="_blank">
                                                         <i class="fa-solid fa-receipt text-primary fs-6"></i>
                                                     </a>
@@ -109,6 +189,21 @@
     </div>
 </div>
 <script>
+    const filterSelect = document.getElementById('orderStatusFilter');
+
+    function filterOrders(selectedStatus) {
+        selectedStatus = selectedStatus.toLowerCase().trim();
+        const rows = document.querySelectorAll('table tbody tr');
+
+        rows.forEach(row => {
+            const statusCell = row.querySelector('td:nth-child(6) .btn').innerText.toLowerCase().trim();
+            row.style.display = (selectedStatus === "" || statusCell === selectedStatus) ? '' : 'none';
+        });
+    }
+    filterSelect.addEventListener('change', function() {
+        filterOrders(this.value);
+    });
+
     function updateOrderStatus(orderId, newStatus) {
         if (!confirm('Are you sure you want to change the order status to ' + newStatus + '?')) {
             return;

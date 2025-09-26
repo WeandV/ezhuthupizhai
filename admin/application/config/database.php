@@ -5,13 +5,13 @@ $active_group = 'default';
 $db['default'] = array(
 	'dsn'	=> '',
 	'hostname' => 'localhost',
-	// 'username' => 'ezhuthupizhai',
-	// 'password' => 'ezhuthupizhai',
-	// 'database' => 'ezhuthupizhai',
-
-	'username' => 'root',
-	'password' => '',
+	'username' => 'ezhuthupizhai',
+	'password' => 'ezhuthupizhai@2025',
 	'database' => 'ezhuthupizhai',
+
+	// 'username' => 'root',
+	// 'password' => '',
+	// 'database' => 'ezhuthupizhai',
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => FALSE,

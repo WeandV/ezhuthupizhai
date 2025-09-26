@@ -28,7 +28,25 @@
               "src/styles.css"
             ],
             "scripts": [
-              "src/assets/js/dz.carousel.js"
+              "src/assets/js/jquery.min.js",
+              "src/assets/vendor/wow/wow.min.js",
+              "src/assets/vendor/bootstrap/dist/js/bootstrap.bundle.min.js",
+              "src/assets/vendor/bootstrap-select/dist/js/bootstrap-select.min.js",
+              "src/assets/vendor/magnific-popup/magnific-popup.js",
+              "src/assets/vendor/swiper/swiper-bundle.min.js",
+              "src/assets/vendor/masonry/masonry-4.2.2.js",
+              "src/assets/vendor/masonry/isotope.pkgd.min.js",
+              "src/assets/vendor/wnumb/wNumb.js",
+              "src/assets/vendor/countdown/jquery.countdown.js",
+              "src/assets/js/dz.carousel.js",
+              "src/assets/vendor/counter/waypoints-min.js",
+              "src/assets/vendor/counter/counterup.min.js",
+              "src/assets/vendor/lightgallery/dist/lightgallery.min.js",
+              "src/assets/vendor/lightgallery/dist/plugins/thumbnail/lg-thumbnail.min.js",
+              "src/assets/vendor/lightgallery/dist/plugins/zoom/lg-zoom.min.js",
+              "src/assets/vendor/group-slide/group-loop.js",
+              "src/assets/js/dz.ajax.js",
+              "src/assets/js/custom.js"
             ],
             "allowedCommonJsDependencies": [
               "ev-emitter/ev-emitter",

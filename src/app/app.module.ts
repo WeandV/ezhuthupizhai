@@ -65,7 +65,6 @@ import { GalleryComponent } from './pages/gallery/gallery.component';
     FormsModule,
     ReactiveFormsModule,
     NgxMasonryModule,
-
     HomeRoutingModule,
     
   ],

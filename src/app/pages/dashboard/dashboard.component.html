@@ -118,11 +118,22 @@
                                         <td data-label="Actions">
                                             <span class="status-badge"
                                                 [class.processing]="order.order_status.toString() === 'Processing'"
+                                                [class.confirmed]="order.order_status.toString() === 'Confirmed'"
+                                                [class.pickup-scheduled]="order.order_status.toString() === 'Pickup Scheduled'"
                                                 [class.shipped]="order.order_status.toString() === 'Shipped'"
+                                                [class.transit]="order.order_status.toString() === 'In Transit'"
+                                                [class.out-for-delivery]="order.order_status.toString() === 'Out For Delivery'"
+                                                [class.out-for-pickup]="order.order_status.toString() === 'Out For Pickup'"
                                                 [class.delivered]="order.order_status.toString() === 'Delivered'"
+                                                [class.rto-initiated]="order.order_status.toString() === 'RTO Initiated'"
+                                                [class.rto-in-transit]="order.order_status.toString() === 'RTO In Transit'"
+                                                [class.rto-out-for-delivery]="order.order_status.toString() === 'RTO Out For Delivery'"
+                                                [class.rto-delivered]="order.order_status.toString() === 'RTO Delivered'"
                                                 [class.cancelled]="order.order_status.toString() === 'Cancelled'"
-                                                [class.on-hold]="order.order_status.toString() === 'On Hold'">{{
-                                                order.order_status }}</span>
+                                                [class.on-hold]="order.order_status.toString() === 'On Hold'"
+                                                [class.delivery-failed]="order.order_status.toString() === 'Delivery Failed'">
+                                                {{ order.order_status }}
+                                            </span>
                                         </td>
                                     </tr>
                                 </tbody>

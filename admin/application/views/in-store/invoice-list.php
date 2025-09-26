@@ -85,8 +85,17 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <button type="button" class="btn btn-sm btn-outline-primary">
-                                                Send
+                                            <?php
+                                            $is_sent = !empty($item->shiprocket_id);
+                                            $btn_class = $is_sent ? 'btn-success' : 'btn-primary';
+                                            $btn_text = $is_sent ? 'Sent' : 'Send to SR';
+                                            $btn_disabled = $is_sent ? 'disabled' : '';
+                                            ?>
+                                            <button
+                                                class="btn <?= $btn_class; ?> send-to-shiprocket"
+                                                data-invoice-id="<?= $item->id ?>"
+                                                <?= $btn_disabled; ?>>
+                                                <?= $btn_text; ?>
                                             </button>
                                         </td>
                                     </tr>
@@ -176,4 +185,36 @@
                 showSnackbox('An error occurred during the update: ' + error.message, 'error');
             });
     }
+
+    document.querySelectorAll('.send-to-shiprocket').forEach(button => {
+        button.addEventListener('click', function() {
+            const invoiceId = this.dataset.invoiceId;
+            fetch('<?= base_url("Dashboard/send_to_shiprocket") ?>', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        invoice_id: invoiceId
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        this.textContent = "Sent";
+                        this.disabled = true;
+                        this.classList.remove('btn-primary');
+                        this.classList.add('btn-success');
+                        showSnackbox(data.message, 'success');
+                    } else {
+                        showSnackbox('Error: ' + data.message, 'error');
+                    }
+                })
+                .catch(err => {
+                    console.error('Fetch Error:', err);
+                    showSnackbox('Error: ' + err.message, 'error');
+                });
+        });
+    });
 </script>
