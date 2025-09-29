@@ -70,7 +70,8 @@ export class CartComponent implements OnInit, OnDestroy {
     );
 
     this.visibleCouponsWithEligibility$ = combineLatest([
-      this.cartService.getVisibleCoupons(),
+      // FIX: Changed private getVisibleCoupons() to public getAllAvailableCoupons()
+      this.cartService.getAllAvailableCoupons(),
       this.cartService.cartTotal$.pipe(debounceTime(100), distinctUntilChanged()),
       this.cartService.appliedCoupons$.pipe(distinctUntilChanged((prev, curr) => prev.length === curr.length && prev[0]?.coupon_code === curr[0]?.coupon_code))
     ]).pipe(
@@ -127,7 +128,6 @@ export class CartComponent implements OnInit, OnDestroy {
     }
   }
 
-  // New method for applying or removing a coupon
   onApplyOrRemoveCoupon(couponCode: string, isEligible: boolean): void {
     this.resetAlert();
     const isCurrentlyApplied = this.cartService.isCouponActive(couponCode);
@@ -147,11 +147,23 @@ export class CartComponent implements OnInit, OnDestroy {
     }
   }
 
-  // New method for copying the coupon code
   onCopyCouponCode(couponCode: string): void {
-    const couponElement = document.getElementById('couponCode_' + couponCode) as HTMLInputElement;
-    if (couponElement) {
-        // Use a safe clipboard access method
+    if (document.execCommand) {
+        // Fallback for environment constraints
+        try {
+            const tempInput = document.createElement('input');
+            tempInput.value = couponCode;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            this.setAlert(`Coupon code "${couponCode}" copied to clipboard!`, 'success');
+        } catch (err) {
+            console.error('execCommand copy failed:', err);
+            this.setAlert('Failed to copy. Please copy manually.', 'danger');
+        }
+    } else {
+        // Modern approach as a secondary fallback if execCommand isn't available/preferred
         try {
             navigator.clipboard.writeText(couponCode);
             this.setAlert(`Coupon code "${couponCode}" copied to clipboard!`, 'success');
@@ -159,8 +171,6 @@ export class CartComponent implements OnInit, OnDestroy {
             this.setAlert('Failed to copy. Please copy manually.', 'danger');
             console.error('Clipboard API write failed:', err);
         }
-    } else {
-        this.setAlert('Failed to copy coupon code.', 'danger');
     }
   }
 

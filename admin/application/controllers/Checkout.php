@@ -50,7 +50,7 @@ class Checkout extends CI_Controller
             exit();
         }
     }
-
+    
     public function place_order_razorpay()
     {
         try {
@@ -66,56 +66,103 @@ class Checkout extends CI_Controller
             $orderSummary    = $input['order_summary'] ?? [];
             $cartItems       = $input['cart_items'] ?? [];
 
-            if (empty($shippingDetails) || empty($orderSummary)) {
+            if (empty($shippingDetails) || empty($orderSummary) || empty($cartItems)) {
                 return $this->output
                     ->set_status_header(400)
-                    ->set_output(json_encode(['success' => false, 'message' => 'Missing order details.']));
+                    ->set_output(json_encode(['success' => false, 'message' => 'Missing order details or empty cart.']));
             }
-            $delivery_charge = $orderSummary['delivery_charge'] ?? 0;
-            $final_total = ($orderSummary['subtotal_after_discount'] ?? 0) + $delivery_charge;
-            $amount_in_paise = intval(round($final_total * 100));
+            $delivery_charge = (float)($orderSummary['delivery_charge'] ?? 0);
+            $subtotal_after_discount = (float)($orderSummary['subtotal_after_discount'] ?? 0);
+            $subtotal_before_coupon = (float)($orderSummary['subtotal'] ?? 0); // Original subtotal (e.g., 2559)
+            $coupon_discount = (float)($orderSummary['coupon_discount'] ?? 0); // Cart-level coupon discount (e.g., 200)
+            $final_total = $subtotal_after_discount + $delivery_charge;
+            $amount_for_razorpay = (int)round($final_total * 100); // 235900
+            $coupon_discount_paise = (int)round($coupon_discount * 100);
+            $total_discount_paise = (int)round(($subtotal_before_coupon - $subtotal_after_discount) * 100);
+            $line_items = [];
+            foreach ($cartItems as $item) {
+                $product = $item['product'];
+                $item_price_before_coupon = (float)($item['effectivePrice'] ?? $item['mrpPriceNumeric'] ?? 0);
+                $item_price_paise = (int)round($item_price_before_coupon * 100);
+
+                $line_item = [
+                    'sku'         => (string)($product['sku'] ?? ''),
+                    'variant_id'  => (string)($product['id'] ?? ''),
+                    'price'       => $item_price_paise,
+                    'tax_amount'  => 0,
+                    'quantity'    => (int)($item['quantity'] ?? 1),
+                    'name'        => (string)($product['name'] ?? 'Product'),
+                    'image_url'   => $product['thumbnail_image'] ?? null,
+                ];
+
+                if (!empty($product['weight_kg'])) {
+                    $line_item['weight'] = (int)round((float)$product['weight_kg'] * 1000);
+                }
+
+                if (!empty($product['length_cm'])) {
+                    $line_item['dimensions'] = [
+                        'length' => (string)(float)$product['length_cm'],
+                        'width'  => (string)(float)$product['breadth_cm'],
+                        'height' => (string)(float)$product['height_cm'],
+                    ];
+                }
+
+                $line_items[] = $line_item;
+            }
             $next_id = $this->db->select_max('id', 'max_id')->get('orders')->row()->max_id;
             $next_id = $next_id ? $next_id + 1 : 1;
             $invoice_id = 'INEPWB0' . $next_id;
+
+            $sanitized_line_items = array_map(function ($item) {
+                $item['price']       = (int)$item['price'];
+                $item['tax_amount']  = (int)$item['tax_amount'];
+                $item['quantity']    = (int)$item['quantity'];
+                return $item;
+            }, $line_items);
+
             $razorpayOrder = $this->api->order->create([
-                'receipt' => $invoice_id,
-                'amount' => $amount_in_paise,
-                'currency' => $this->config->item('razorpay_currency') ?? 'INR',
-                'payment_capture' => 1,
+                'receipt'          => $invoice_id,
+                'amount'           => (int)$amount_for_razorpay, // 235900 (Final amount)
+                'currency'         => $this->config->item('razorpay_currency') ?? 'INR',
+                'payment_capture'  => 1,
+                'line_items_total' => (int)$amount_for_razorpay,
+                'line_items'       => $sanitized_line_items,
                 'notes' => [
-                    'app_name'        => 'EP New Website',
-                    'Invoice'        => $invoice_id,
-                    'app_id'          => 'EPNGW001',
+                    'app_name'      => 'EP New Website',
+                    'Invoice'       => $invoice_id,
+                    'app_id'        => 'EPNGW001',
+                    'coupon_discount' => $coupon_discount_paise, // Store discount in notes
                 ]
             ]);
+
             $this->db->insert('razorpay_payments', [
-                'order_id' => 0,
+                'order_id'          => 0,
                 'razorpay_order_id' => $razorpayOrder['id'],
-                'amount' => $final_total,
-                'currency' => $this->config->item('razorpay_currency') ?? 'INR',
-                'status' => 'created',
-                'invoice_id' => $invoice_id,
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s')
+                'amount'            => $final_total,
+                'currency'          => $this->config->item('razorpay_currency') ?? 'INR',
+                'status'            => 'created',
+                'invoice_id'        => $invoice_id,
+                'created_at'        => date('Y-m-d H:i:s'),
+                'updated_at'        => date('Y-m-d H:i:s')
             ]);
 
             return $this->output
                 ->set_content_type('application/json')
                 ->set_status_header(201)
                 ->set_output(json_encode([
-                    'success' => true,
-                    'message' => 'Razorpay order created successfully.',
+                    'success'        => true,
+                    'message'        => 'Razorpay order created successfully.',
                     'razorpayOrderId' => $razorpayOrder['id'],
-                    'key' => $this->config->item('razorpay_key_id'),
-                    'amount' => $amount_in_paise,
-                    'currency' => $this->config->item('razorpay_currency') ?? 'INR',
-                    'invoice_id' => $invoice_id,
-                    'notes' => $razorpayOrder['notes'],
-                    'name' => "Ezhuthupizhai",
-                    'description' => "Payment for your order",
+                    'key'            => $this->config->item('razorpay_key_id'),
+                    'amount'         => (int)$amount_for_razorpay,
+                    'currency'       => $this->config->item('razorpay_currency') ?? 'INR',
+                    'invoice_id'     => $invoice_id,
+                    'notes'          => $razorpayOrder['notes'],
+                    'name'           => "Ezhuthupizhai",
+                    'description'    => "Payment for your order",
                     'prefill' => [
-                        'name' => $shippingDetails['firstName'] . ' ' . ($shippingDetails['lastName'] ?? ''),
-                        'email' => $shippingDetails['email'] ?? '',
+                        'name'    => trim($shippingDetails['firstName'] . ' ' . ($shippingDetails['lastName'] ?? '')),
+                        'email'   => $shippingDetails['email'] ?? '',
                         'contact' => $shippingDetails['phone'] ?? ''
                     ]
                 ]));
@@ -127,7 +174,6 @@ class Checkout extends CI_Controller
                 ->set_output(json_encode(['success' => false, 'message' => $e->getMessage()]));
         }
     }
-
 
     public function verify_payment()
     {
@@ -146,42 +192,87 @@ class Checkout extends CI_Controller
             'razorpay_signature' => $input['razorpay_signature']
         ];
 
+        // Retrieve the Secret Key from configuration
+        $razorpay_secret = $this->config->item('razorpay_key_secret');
+
+        // IMPORTANT DEBUG CHECK: Ensure the secret key is retrieved successfully
+        if (empty($razorpay_secret)) {
+            log_message('error', 'Razorpay Secret Key not configured in application config.');
+            $this->output->set_status_header(500); // Changed to 500 since this is a configuration failure
+            echo json_encode(['success' => false, 'message' => 'Server configuration error: Razorpay Secret Key is missing.']);
+            return;
+        }
+
         $this->db->trans_begin();
 
         try {
-            $this->api->utility->verifyPaymentSignature($attributes);
+            // CRITICAL FIX: Explicitly pass the secret key for verification.
+            $this->api->utility->verifyPaymentSignature($attributes, $razorpay_secret);
+
             $payment = $this->api->payment->fetch($input['razorpay_payment_id']);
+
             if ($payment['status'] !== 'captured') {
                 $this->db->trans_rollback();
                 $this->output->set_status_header(400);
-                echo json_encode(['success' => false, 'message' => 'Payment not completed.']);
+                echo json_encode(['success' => false, 'message' => 'Payment not completed or failed to capture.']);
                 return;
             }
+
             $razorpayOrder = $this->api->order->fetch($input['razorpay_order_id']);
             $invoice_id = $razorpayOrder['receipt'] ?? null;
+
             $shippingDetails = $input['shipping_details'] ?? [];
-            $orderSummary = $input['order_summary'] ?? [];
-            $cartItems = $input['cart_items'] ?? [];
+            $orderSummary    = $input['order_summary'] ?? [];
+            $cartItems       = $input['cart_items'] ?? [];
+
+            // --- 1. Sanitize and complete the shipping details array ---
+            // Ensure all NOT NULL fields in orders and user_addresses tables have non-null, default values if missing.
+            $firstName = $shippingDetails['firstName'] ?? $shippingDetails['name'] ?? 'Guest';
+            $lastName = $shippingDetails['lastName'] ?? '';
+
+            $sanitizedShippingDetails = [
+                'firstName'  => $firstName,
+                'lastName'   => $lastName,
+                'email'      => $shippingDetails['email'] ?? 'guest@example.com',
+                'phone'      => $shippingDetails['phone'] ?? $shippingDetails['contact'] ?? '0000000000',
+                'address1'   => $shippingDetails['address1'] ?? 'N/A',
+                'address2'   => $shippingDetails['address2'] ?? null,
+                'city'       => $shippingDetails['city'] ?? 'N/A',
+                'state'      => $shippingDetails['state'] ?? 'N/A',
+                'zipCode'    => $shippingDetails['zipCode'] ?? '000000',
+                'country'    => $shippingDetails['country'] ?? 'IN',
+                'orderNotes' => $shippingDetails['orderNotes'] ?? null,
+            ];
+            // -----------------------------------------------------------
+
             $user_auth_context = $input['user_auth_context'] ?? [];
-            $user_id = $this->handleUserAndAddressCreation($user_auth_context, $shippingDetails);
-            if (!$user_id) throw new Exception('Failed to create user.');
+
+            // --- 2. Pass the complete array to the helper ---
+            $user_id = $this->handleUserAndAddressCreation($user_auth_context, $sanitizedShippingDetails);
+
+            if (!$user_id) {
+                // Throw an exception that clearly shows the failure point to the user
+                throw new Exception('User ID creation failed in handleUserAndAddressCreation. Check helper logic or required input fields.');
+            }
+
+            // --- 3. Use the complete array for $orderData ---
             $orderData = [
                 'user_id' => $user_id,
                 'invoice_id' => $invoice_id,
-                'first_name' => $shippingDetails['firstName'],
-                'last_name' => $shippingDetails['lastName'] ?? null,
-                'email' => $shippingDetails['email'],
-                'phone' => $shippingDetails['phone'],
-                'address1' => $shippingDetails['address1'],
-                'address2' => $shippingDetails['address2'] ?? null,
-                'city' => $shippingDetails['city'],
-                'state' => $shippingDetails['state'],
-                'zip_code' => $shippingDetails['zipCode'],
-                'country' => $shippingDetails['country'],
-                'order_notes' => $shippingDetails['orderNotes'] ?? null,
+                'first_name' => $sanitizedShippingDetails['firstName'],
+                'last_name' => $sanitizedShippingDetails['lastName'],
+                'email' => $sanitizedShippingDetails['email'],
+                'phone' => $sanitizedShippingDetails['phone'],
+                'address1' => $sanitizedShippingDetails['address1'],
+                'address2' => $sanitizedShippingDetails['address2'],
+                'city' => $sanitizedShippingDetails['city'],
+                'state' => $sanitizedShippingDetails['state'],
+                'zip_code' => $sanitizedShippingDetails['zipCode'],
+                'country' => $sanitizedShippingDetails['country'],
+                'order_notes' => $sanitizedShippingDetails['orderNotes'],
                 'payment_method' => 'Razorpay(Paid)',
                 'subtotal' => $orderSummary['subtotal'],
-                'coupon_discount' => $orderSummary['coupon_discount'],
+                'coupon_discount' => $orderSummary['coupon_discount'] ?? 0, // Added default 0 for safety
                 'subtotal_after_discount' => $orderSummary['subtotal_after_discount'],
                 'delivery_charge' => $orderSummary['delivery_charge'],
                 'final_total' => $orderSummary['final_total'],
@@ -190,11 +281,14 @@ class Checkout extends CI_Controller
 
             $order_id = $this->Order_model->insert_order($orderData);
             if (!$order_id) throw new Exception('Failed to create order.');
+
             $orderItemsToInsert = $this->prepareOrderItems($cartItems, $order_id);
             if (empty($orderItemsToInsert) || !$this->Order_model->insert_order_items($orderItemsToInsert)) {
                 throw new Exception('Failed to save order items.');
             }
+
             $this->updateInventory($orderItemsToInsert);
+
             $this->Payment_model->update_payment($input['razorpay_order_id'], [
                 'order_id' => $order_id,
                 'razorpay_payment_id' => $input['razorpay_payment_id'],
@@ -202,14 +296,18 @@ class Checkout extends CI_Controller
                 'status' => 'paid',
                 'invoice_id' => $invoice_id
             ]);
+
             $this->db->trans_commit();
+
             $order_details = $this->Order_model->get_order_by_id($order_id);
             $order_items = $this->Order_model->get_order_items($order_id);
+
             try {
                 $this->send_to_shiprocket($order_id, $order_details, $order_items);
             } catch (Exception $e) {
-                log_message('error', $e->getMessage());
+                log_message('error', 'Shiprocket send failed: ' . $e->getMessage());
             }
+
             $this->_sendOrderConfirmationEmail($order_id, $order_details, $order_items);
             $this->_sendAdminNewOrderEmail($order_id, $order_details, $order_items);
 
@@ -217,11 +315,19 @@ class Checkout extends CI_Controller
             echo json_encode(['success' => true, 'message' => 'Payment verified and order created successfully.', 'order_id' => $order_id]);
         } catch (Exception $e) {
             $this->db->trans_rollback();
-            log_message('error', 'Razorpay Verify Error: ' . $e->getMessage());
+            // This captures either signature failure OR model/dependency errors
+            log_message('error', 'Razorpay Verification/Processing Error: ' . $e->getMessage());
+
             $this->output->set_status_header(400);
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            echo json_encode([
+                'success' => false,
+                // Show the actual message to the client
+                'message' => 'Verification failed: ' . $e->getMessage(),
+            ]);
         }
     }
+
+
 
     private function _sendOrderConfirmationEmail($order_id, $order_details, $order_items)
     {

@@ -825,6 +825,26 @@ export class CheckoutComponent implements OnInit, OnDestroy {
             order_id: response.razorpayOrderId,
             prefill: response.prefill,
             theme: { color: '#0D6EFD' },
+            config: {
+                display: {
+                    blocks: {
+                        utib: {
+                            name: "Pay using Axis Bank",
+                            instruments: [
+                                {
+                                    method: "netbanking",
+                                    banks: ["UTIB"]
+                                }
+                            ]
+                        }
+                    },
+                    sequence: ["block.utib", "block.cards", "block.upi"],
+                    preferences: {
+                        show_default_blocks: true
+                    }
+                }
+            },
+
             handler: async (razorpayResponse: any) => {
                 this.showLoader = true; // show loader immediately after popup closes
 

@@ -12,42 +12,66 @@ declare const bootstrap: any;
 @Injectable({
     providedIn: 'root',
 })
-
 export class CartService implements OnDestroy {
     private apiUrl = environment.apiUrl + 'api/get_all_coupons';
     private checkoutApiUrl = environment.apiUrl + 'checkout/';
     private enabledCouriersApiUrl =
         environment.apiUrl + 'checkout/get_enabled_couriers';
+        
     private cartItemsSubject = new BehaviorSubject<CartItem[]>([]);
-    public cartItems$: Observable<CartItem[]> =
-        this.cartItemsSubject.asObservable();
+    public cartItems$: Observable<CartItem[]> = this.cartItemsSubject.asObservable();
 
     private appliedCouponsSubject = new BehaviorSubject<AppliedCoupon[]>([]);
-    public appliedCoupons$: Observable<AppliedCoupon[]> =
-        this.appliedCouponsSubject.asObservable();
+    public appliedCoupons$: Observable<AppliedCoupon[]> = this.appliedCouponsSubject.asObservable();
 
     private _allCouponsFromDatabase: AppliedCoupon[] = [];
     private couponsLoaded = new BehaviorSubject<boolean>(false);
 
     private _currentCustomerId: BehaviorSubject<number | null> =
         new BehaviorSubject<number | null>(101);
-    public currentCustomerId$: Observable<number | null> =
-        this._currentCustomerId.asObservable();
+    public currentCustomerId$: Observable<number | null> = this._currentCustomerId.asObservable();
 
     private _manualOverrideCouponCode = new BehaviorSubject<string | null>(null);
     public manualOverrideCouponCode$: Observable<string | null> =
         this._manualOverrideCouponCode.asObservable();
 
     private _suppressAutoApply = new BehaviorSubject<boolean>(false);
-    public suppressAutoApply$: Observable<boolean> =
-        this._suppressAutoApply.asObservable();
+    public suppressAutoApply$: Observable<boolean> = this._suppressAutoApply.asObservable();
 
-    // New BehaviorSubject for delivery charge
-    // private _deliveryChargeSubject = new BehaviorSubject<number>(0);
-    // public deliveryCharge$: Observable<number> =
-    //   this._deliveryChargeSubject.asObservable();
     private _deliveryChargeSubject = new BehaviorSubject<number>(0);
     public deliveryCharge$ = this._deliveryChargeSubject.asObservable();
+
+    private cartTotalSubject = new BehaviorSubject<number>(0);
+
+    private _autoApplySubscription: Subscription | null = null;
+    private _initSubscription: Subscription | null = null;
+
+    constructor(private http: HttpClient) {
+        this._initSubscription = this.fetchCouponsFromBackend()
+            .pipe(
+                tap(() => this.couponsLoaded.next(true)),
+                tap(() => this.loadCartFromLocalStorage()),
+                tap(() => this.loadCouponsFromLocalStorage()),
+                take(1)
+            )
+            .subscribe(
+                () => {
+                    this.applyBestAvailableCoupon();
+                    this.setupAutoApplyListeners();
+                    this.calculateAndNotifyTotals();
+                },
+                (error) => console.error(error)
+            );
+    }
+
+    ngOnDestroy(): void {
+        if (this._autoApplySubscription) {
+            this._autoApplySubscription.unsubscribe();
+        }
+        if (this._initSubscription) {
+            this._initSubscription.unsubscribe();
+        }
+    }
 
     public updateCurrentCustomerId(id: number | null): void {
         if (this._currentCustomerId.value !== id) {
@@ -77,7 +101,7 @@ export class CartService implements OnDestroy {
             })
         );
 
-    public readonly cartTotal$: Observable<number> = this.itemsTotal$;
+    public readonly cartTotal$: Observable<number> = this.cartTotalSubject.asObservable();
 
     public readonly totalCouponDiscount$: Observable<number> = combineLatest([
         this.appliedCouponsSubject.asObservable(),
@@ -145,7 +169,7 @@ export class CartService implements OnDestroy {
             }
             return Math.min(discount, subtotalForCoupon);
         }),
-        catchError((err) => {
+        catchError(() => {
             this.appliedCouponsSubject.next([]);
             this._manualOverrideCouponCode.next(null);
             this._suppressAutoApply.next(false);
@@ -186,6 +210,7 @@ export class CartService implements OnDestroy {
                     this._suppressAutoApply.next(false);
                     this.saveCouponsToLocalStorage();
                 }
+                this.calculateAndNotifyTotals();
             }
         })
     );
@@ -195,40 +220,10 @@ export class CartService implements OnDestroy {
         this.totalCouponDiscount$,
     ]).pipe(map(([itemsTotal, discount]) => Math.max(0, itemsTotal - discount)));
 
-    // Use the new delivery charge subject
     public readonly finalTotal$: Observable<number> = combineLatest([
         this.subTotalAfterDiscount$,
         this.deliveryCharge$,
     ]).pipe(map(([subTotal, delivery]) => subTotal + delivery));
-
-    private _autoApplySubscription: Subscription | null = null;
-    private _initSubscription: Subscription | null = null;
-
-    constructor(private http: HttpClient) {
-        this._initSubscription = this.fetchCouponsFromBackend()
-            .pipe(
-                tap(() => this.couponsLoaded.next(true)),
-                tap(() => this.loadCartFromLocalStorage()),
-                tap(() => this.loadCouponsFromLocalStorage()),
-                take(1)
-            )
-            .subscribe(
-                () => {
-                    this.applyBestAvailableCoupon();
-                    this.setupAutoApplyListeners();
-                },
-                (error) => console.error(error)
-            );
-    }
-
-    ngOnDestroy(): void {
-        if (this._autoApplySubscription) {
-            this._autoApplySubscription.unsubscribe();
-        }
-        if (this._initSubscription) {
-            this._initSubscription.unsubscribe();
-        }
-    }
 
     private setupAutoApplyListeners(): void {
         if (this._autoApplySubscription) {
@@ -244,6 +239,7 @@ export class CartService implements OnDestroy {
                 delay(0),
                 tap(() => {
                     this.applyBestAvailableCoupon();
+                    this.calculateAndNotifyTotals();
                 })
             )
             .subscribe();
@@ -266,10 +262,9 @@ export class CartService implements OnDestroy {
                             : Array.isArray(coupon.allowed_customer_ids)
                                 ? coupon.allowed_customer_ids
                                 : null,
-                    // Check for null here to differentiate from an empty list
                     allowed_product_ids:
                         coupon.allowed_product_ids === null
-                            ? null // Explicitly keep null if it's null from the API
+                            ? null
                             : typeof coupon.allowed_product_ids === 'string'
                                 ? coupon.allowed_product_ids
                                     .split(',')
@@ -283,19 +278,22 @@ export class CartService implements OnDestroy {
             tap((processedCoupons) => {
                 this._allCouponsFromDatabase = processedCoupons;
             }),
-            catchError((error) => {
+            catchError(() => {
                 this._allCouponsFromDatabase = [];
                 return of([]);
             })
         );
     }
 
-    // In src/app/services/cart.service.ts
-    public getVisibleCoupons(): Observable<AppliedCoupon[]> {
+    public getAllAvailableCoupons(): Observable<AppliedCoupon[]> {
+        return this.getVisibleCoupons();
+    }
+
+    private getVisibleCoupons(): Observable<AppliedCoupon[]> {
         return combineLatest([
             this.couponsLoaded.pipe(filter((loaded) => loaded)),
             this.currentCustomerId$,
-            this.cartItems$, // <-- Add this to make it reactive to cart changes
+            this.cartItems$,
         ]).pipe(
             map(([loaded, currentCustomerId, cartItems]) => {
                 return this._allCouponsFromDatabase.filter((coupon) => {
@@ -331,11 +329,26 @@ export class CartService implements OnDestroy {
         );
     }
 
-    // In src/app/services/cart.service.ts
+    public getCartSubtotal(): number {
+        let subtotal = 0;
+        this.itemsTotal$.pipe(take(1)).subscribe(total => {
+            subtotal = total;
+        });
+        return subtotal;
+    }
+
+    public getCartTotalWithDiscount(): number {
+        let finalTotal = 0;
+        this.finalTotal$.pipe(take(1)).subscribe(total => {
+            finalTotal = total;
+        });
+        return finalTotal;
+    }
+
     public isCouponEligible(coupon: AppliedCoupon): Observable<boolean> {
         return combineLatest([
             this.currentCustomerId$,
-            this.cartItems$, // <-- Add this to make it reactive to cart changes
+            this.cartItems$,
         ]).pipe(
             map(([currentCustomerId, cartItems]) => {
                 const isExpired =
@@ -373,6 +386,10 @@ export class CartService implements OnDestroy {
         );
     }
 
+    private parsePrice(priceString: string): number {
+        return parseFloat(priceString) || 0;
+    }
+
     private loadCartFromLocalStorage(): void {
         const storedCart = localStorage.getItem('shopping_cart');
         if (storedCart) {
@@ -383,9 +400,15 @@ export class CartService implements OnDestroy {
                         item.product &&
                         item.product.id !== undefined &&
                         item.quantity !== undefined;
+
                     if (isValid && item.effectivePrice === undefined) {
-                        item.effectivePrice = this.getEffectiveProductPrice(item.product);
+                        item.effectivePrice = this.parsePrice(item.product.special_price);
+                        item.mrpPriceNumeric = this.parsePrice(item.product.mrp_price);
                     }
+                    if (isValid && item.mrpPriceNumeric === undefined) {
+                        item.mrpPriceNumeric = this.parsePrice(item.product.mrp_price);
+                    }
+
                     return isValid;
                 });
                 this.cartItemsSubject.next(validCartItems);
@@ -492,7 +515,7 @@ export class CartService implements OnDestroy {
             existingItem.quantity += quantity;
             existingItem.effectivePrice = effectivePrice;
         } else {
-            currentItems.push({ product, quantity, effectivePrice });
+            currentItems.push({ product, quantity, effectivePrice, mrpPriceNumeric: this.parsePrice(product.mrp_price) });
         }
         this.cartItemsSubject.next(currentItems);
         this._suppressAutoApply.next(false);
@@ -533,7 +556,6 @@ export class CartService implements OnDestroy {
         }, 0);
     }
 
-    // In src/app/services/cart.service.ts
     private getCartTotalForCoupon(coupon: AppliedCoupon | undefined): number {
         if (!coupon) return 0;
 
@@ -546,19 +568,18 @@ export class CartService implements OnDestroy {
                     .filter((id) => !isNaN(id))
                 : null;
 
-        // If allowed_product_ids is null or an empty array, it applies to the full cart.
         if (allowedProductIds === null || allowedProductIds.length === 0) {
             return this.getCartTotalBeforeCoupons();
         }
 
         return this.cartItemsSubject.value
             .filter((item) => {
-                // Ensure both values are numbers for a correct comparison
                 const productIdNum = Number(item.product.id);
                 return allowedProductIds.includes(productIdNum);
             })
             .reduce((sum, item) => sum + item.effectivePrice * item.quantity, 0);
     }
+
     public isCouponActive(couponCode: string): boolean {
         const applied = this.appliedCouponsSubject.value;
         return (
@@ -636,6 +657,8 @@ export class CartService implements OnDestroy {
         this._manualOverrideCouponCode.next(couponToApply.coupon_code);
         this._suppressAutoApply.next(false);
         this.saveCouponsToLocalStorage();
+        this.calculateAndNotifyTotals();
+
         return {
             success: true,
             message: `Coupon "${couponToApply.coupon_code}" applied successfully!`,
@@ -652,7 +675,13 @@ export class CartService implements OnDestroy {
             this._manualOverrideCouponCode.next(null);
             this._suppressAutoApply.next(true);
             this.saveCouponsToLocalStorage();
+            this.calculateAndNotifyTotals();
         }
+    }
+
+    private calculateAndNotifyTotals(): void {
+        const finalTotal = this.getCartTotalWithDiscount();
+        this.cartTotalSubject.next(finalTotal);
     }
 
     public clearCart(): void {
@@ -662,6 +691,7 @@ export class CartService implements OnDestroy {
         this._suppressAutoApply.next(false);
         this.saveCartToLocalStorage();
         this.saveCouponsToLocalStorage();
+        this.calculateAndNotifyTotals();
     }
 
     private openOffcanvasCart(): void {
@@ -720,6 +750,7 @@ export class CartService implements OnDestroy {
                             const meetsMinOrder =
                                 subtotalForManualCoupon >=
                                 (manuallyAppliedCoupon.min_order_value || 0);
+
                             let isCustomerAllowed = true;
                             if (manuallyAppliedCoupon.visibility === 'specific_customer') {
                                 const allowedIds: number[] =
@@ -858,7 +889,6 @@ export class CartService implements OnDestroy {
         );
     }
     public refreshCoupons(): void {
-        // This will reload the coupons and re-evaluate the cart
         this.fetchCouponsFromBackend()
             .pipe(take(1))
             .subscribe({
@@ -872,16 +902,12 @@ export class CartService implements OnDestroy {
             });
     }
 
-    // enabled courier
-    // In src/app/services/cart.service.ts
-
     public getEnabledCouriers(data: any): Observable<any> {
         const headers = { 'Content-Type': 'application/json' };
         return this.http
             .post<any>(this.enabledCouriersApiUrl, data, { headers })
             .pipe(
                 catchError((error) => {
-                    console.error('API Error fetching enabled couriers:', error);
                     return of({
                         status: 'error',
                         message: 'An error occurred while fetching couriers.',
