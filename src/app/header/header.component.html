@@ -1,0 +1,286 @@
+<header class="site-header mo-left header style-1 bg-light">
+    <div class="sticky-header main-bar-wraper navbar-expand-lg">
+        <div class="main-bar clearfix">
+            <div class="container-fluid clearfix d-lg-flex d-block">
+                <div class="logo-header logo-dark">
+                    <a href="home">
+                        <img src="assets/images/logo.png" alt="logo" width="150" height="40">
+                    </a>
+                </div>
+                <button class="navbar-toggler collapsed navicon justify-content-end" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <div class="header-nav w3menu navbar-collapse collapse justify-content-center" id="navbarNavDropdown">
+                    <div class="logo-header logo-dark">
+                        <a href="home">
+                            <img src="assets/images/logo.png" alt="logo" width="150" height="40">
+                        </a>
+                    </div>
+                    <ul class="nav navbar-nav">
+                        <li class="has-mega-menu sub-menu-down auto-width menu-left">
+                            <a href="home"> <span>Home</span>
+                                <i class="fas fa-chevron-down tabindex"></i>
+                            </a>
+                        </li>
+                        <li class="has-mega-menu sub-menu-down auto-width menu-left">
+                            <a href="shop"> <span>Shop</span>
+                                <i class="fas fa-chevron-down tabindex"></i>
+                            </a>
+                        </li>
+                        <li class="has-mega-menu sub-menu-down auto-width menu-left">
+                            <a href="gallery"> <span>Gallery</span>
+                                <i class="fas fa-chevron-down tabindex"></i>
+                            </a>
+                        </li>
+                        <li class="has-mega-menu sub-menu-down auto-width menu-left">
+                            <a href="shop-in-store"> <span>Shop In Store</span>
+                                <i class="fas fa-chevron-down tabindex"></i>
+                            </a>
+                        </li>
+                        <li class="has-mega-menu sub-menu-down auto-width menu-left">
+                            <a href="contact"> <span>Contact</span>
+                                <i class="fas fa-chevron-down tabindex"></i>
+                            </a>
+                        </li>
+                        <!-- <li class="has-mega-menu sub-menu-down auto-width menu-left">
+                            <a href="international-orders"> <span>For International Orders</span>
+                                <i class="fas fa-chevron-down tabindex"></i>
+                            </a>
+                        </li> -->
+                        <!-- <li class="has-mega-menu sub-menu-down auto-width menu-left">
+                            <a href="byob"> <span>BYOB</span>
+                                <i class="fas fa-chevron-down tabindex"></i>
+                            </a>
+                        </li> -->
+                    </ul>
+                </div>
+                <div class="extra-nav">
+                    <div class="extra-cell">
+                        <ul class="header-right">
+                            <li class="nav-item" *ngIf="!isLoggedIn">
+                                <a href="login" class="nav-link" (click)="onLoginRegister()">
+                                    <i class="fa-solid fa-user pe-1" style="font-size: 15px;"></i>
+                                    Login
+                                </a>
+                            </li>
+                            <li class="nav-item" *ngIf="isLoggedIn">
+                                <a href="" class="nav-link" (click)="onLogout()">
+                                    <i class="fa-solid fa-right-from-bracket pe-1" style="font-size: 15px;"></i>
+                                    Logout
+                                </a>
+                            </li>
+                            <li class="nav-item" *ngIf="isLoggedIn">
+                                <a href="dashboard" class="nav-link">
+                                    <i class="fa-solid fa-bars pe-1" style="font-size: 15px;"></i>
+                                    Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item cart-link">
+                                <a href="javascript:void(0);" class="nav-link cart-btn" data-bs-toggle="offcanvas"
+                                    data-bs-target="#offcanvasRight" aria-controls="offcanvasRight">
+                                    <i class="fa-solid fa-cart-plus p-2"></i>
+                                    <span class="badge badge-circle">{{ cartItemCount }}</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="offcanvas  bg-white dz-offcanvas offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight">
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close">
+            &times;
+        </button>
+        <div class="offcanvas-body">
+            <h4 class="">Shopping Cart</h4>
+            <div *ngIf="paymentMessage" class="alert alert-dismissible fade show mb-3"
+                [ngClass]="{'alert-danger': isPaymentError, 'alert-warning': !isPaymentError}" role="alert">
+                {{ paymentMessage }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"
+                    (click)="paymentMessage = null"></button>
+            </div>
+            <ng-container *ngIf="cartItems.length > 0">
+                <div class="shop-sidebar-cart">
+                    <ul class="sidebar-cart-list bg-light p-3 rounded mb-2">
+                        <li *ngFor="let item of cartItems">
+                            <div class="cart-widget">
+                                <div class="dz-media me-3">
+                                    <img [src]="item.product.thumbnail_image" [alt]="item.product.name" width="100"
+                                        height="100" loading="lazy">
+                                </div>
+                                <div class="cart-content">
+                                    <h6 class="title mb-0">{{ item.product.name }}</h6>
+                                    <div class="pricingtable-wrapper style-1 p-1 mt-0 border-0"
+                                        *ngIf="item.product.options?.['is_byob_box']">
+                                        <div class="pricingtable-inner mb-4">
+                                            <div class="pricingtable-list">
+                                                <ul class="byob-item-list pricingtable-features p-0">
+                                                    <li
+                                                        *ngFor="let itemName of item.product.options?.['selected_item_names']">
+                                                        {{ itemName }}
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div
+                                        class="d-flex justify-content-between align-items-center cart-item-controls mt-0">
+                                        <div class="quantity-selector">
+                                            <button class="quantity-button minus"
+                                                (click)="decrementQuantity(item.product.id, item.quantity)">
+                                                <i class="fa-solid fa-minus"></i>
+                                            </button>
+                                            <input type="text" [value]="item.quantity"
+                                                name="quantity_{{item.product.id}}" class="quantity-input" readonly>
+                                            <button class="quantity-button plus"
+                                                (click)="incrementQuantity(item.product.id, item.quantity)">
+                                                <i class="fa-solid fa-plus"></i>
+                                            </button>
+                                        </div>
+                                        <div class="product-price-display">
+                                            <span *ngIf="item.mrp_price > item.effectivePrice" class="text-red mr-2"
+                                                style="text-decoration: line-through; font-size: 1em; color:red!important">
+                                                &#8377;{{ (item.mrp_price * item.quantity) | number:'1.2-2' }}
+                                            </span>
+                                            <h6 class="dz-price mb-0 fs-4">
+                                                &#8377;{{ (item.effectivePrice * item.quantity) | number:'1.2-2' }}
+                                            </h6>
+                                        </div>
+                                    </div>
+                                </div>
+                                <a href="javascript:void(0);" class="dz-close"
+                                    (click)="removeFromCart(item.product.id)">
+                                    <i class="fa-regular fa-trash-can fs-6 text-red"></i>
+                                </a>
+                            </div>
+                        </li>
+                    </ul>
+                    <div class="cart-total-breakdown">
+                        <div class="cart-total">
+                            <h5 class="mb-0">Subtotal:</h5>
+                            <h5 class="mb-0">{{ cartTotal | currency:'INR':'symbol':'1.2-2' }}</h5>
+                        </div>
+                        <div class="cart-total" *ngIf="discountAmount > 0">
+                            <h5 class="mb-0 text-success">Coupon Discount:</h5>
+                            <h5 class="mb-0 text-success">- {{ discountAmount | currency:'INR':'symbol':'1.2-2' }}</h5>
+                        </div>
+                        <div class="cart-total">
+                            <h5 class="mb-1">Enter Pincode:</h5>
+                            <h5>
+                                <input type="text" class="form-control" placeholder="Pincode" [(ngModel)]="pincode"
+                                    maxlength="6" (input)="onPincodeChange()" style="padding: 10px;height: 100%;" />
+                            </h5>
+                        </div>
+                        <div class="cart-total" *ngIf="deliveryCharge !== null && deliveryCharge !== undefined">
+                            <h5 class="mb-0">Delivery Charge:</h5>
+                            <h5 class="mb-0" [ngClass]="{'text-success': deliveryCharge === 0}">
+                                <ng-container *ngIf="deliveryCharge === 0; else showCharge">
+                                    Calculating...
+                                </ng-container>
+                                <ng-template #showCharge>
+                                    + {{ deliveryCharge | currency:'INR':'symbol':'1.2-2' }}
+                                </ng-template>
+                            </h5>
+                        </div>
+                        <div class="cart-total border-top pt-2 mt-2">
+                            <h5 class="mb-0 fw-bold">Total Value:</h5>
+                            <h5 class="mb-0 fw-bold"> {{ finalTotal | currency:'INR':'symbol':'1.2-2' }}</h5>
+                        </div>
+                    </div>
+                    <div class="mt-auto">
+                        <div class="style-4 m-b10 d-block">
+                            <div *ngIf="availableCoupons.length > 0; else noAvailableCoupons">
+                                <div *ngFor="let coupon of availableCoupons"
+                                    class="coupon-item mb-1 p-2 icon-bx-wraper coupon-applied-section"
+                                    [ngClass]="{'applied-status': appliedCoupon?.coupon_code === coupon.coupon_code}">
+                                    <div class="coupon-icon">
+                                        <i class="fa-solid fa-tag text-dark"></i>
+                                    </div>
+                                    <div class="coupon-details">
+                                        <p class="text-dark coupon-offer-text mb-0 fs-5">
+                                            <ng-container *ngIf="coupon.discount_type === 'fixed'">
+                                                Flat ₹{{ coupon.discount_value | number:'1.0-0' }} OFF | 
+                                                Coupon Code: <span class="text-white fw-bold p-2 ms-2" style="background-color: #381059;">{{ coupon.coupon_code
+                                                    }}</span>
+                                            </ng-container>
+                                            <ng-container *ngIf="coupon.discount_type === 'percentage'">
+                                                {{ coupon.discount_value }}% OFF
+                                            </ng-container>
+                                            <ng-container *ngIf="coupon.discount_type === 'delivery_free'">
+                                                FREE DELIVERY
+                                            </ng-container>
+                                        </p>
+                                        <p class="text-dark coupon-code-text">
+
+                                        </p>
+                                        <!-- <p class="text-dark coupon-expiry-text">{{ coupon.display_text }}</p> -->
+                                    </div>
+                                    <div class="coupon-action">
+                                        <button *ngIf="appliedCoupon?.coupon_code !== coupon.coupon_code" type="button"
+                                            class="btn apply-button btn-md btn-outline-secondary btnhover20"
+                                            (click)="onApplyCoupon(coupon)">
+                                            Apply
+                                        </button>
+                                        <button *ngIf="appliedCoupon?.coupon_code === coupon.coupon_code" type="button"
+                                            class="btn apply-button btn-md btn-outline-secondary btnhover20" disabled>
+                                            Applied
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <ng-template #noAvailableCoupons>
+                                <p class="text-center m-t10">No special coupons available for you right now.</p>
+                            </ng-template>
+                        </div>
+                        <ng-template #noAvailableCouponscanvas>
+                            <p class="text-center m-t10">No special coupons available for you right now.</p>
+                        </ng-template>
+                        <ng-template #noAppliedCouponOffcanvas>
+                            <p class="text-center m-t10">No coupon applied.</p>
+                        </ng-template>
+                        <div class="d-flex justify-content-between gap-2">
+                            <a href="cart" class="btn btn-outline-secondary btn-block m-b20">View Cart</a>
+                            <a href="javascript:void(0);" class="btn btn-secondary btn-block m-b20"
+                                [class.disabled]="!pincode || pincode.length !== 6 || couriersLoading || selectedCourier === null || isVerifyingPayment"
+                                [attr.aria-disabled]="!pincode || pincode.length !== 6 || couriersLoading || selectedCourier === null || isVerifyingPayment"
+                                (click)="startMagicCheckout()">
+
+                                <ng-container *ngIf="isVerifyingPayment">
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"
+                                        aria-hidden="true"></span>
+                                    Processing...
+                                </ng-container>
+                                <ng-container *ngIf="!isVerifyingPayment">
+                                    Checkout
+                                </ng-container>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </ng-container>
+            <ng-container *ngIf="cartItems.length === 0">
+                <ul class="sidebar-cart-list bg-light p-3 rounded mb-2">
+                    <li>
+                        <p class="text-center">Your cart is empty.</p>
+                    </li>
+                </ul>
+            </ng-container>
+        </div>
+    </div>
+</header>
+<div *ngIf="isVerifyingPayment" class="full-page-loader glasseffect">
+    <div class="spinner-overlay">
+        <div class="spinner-border text-secondary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 text-white fw-bold fs-4">Order is being processed...</p>
+        <p class="text-white text-center px-4">
+            Please do not refresh the page or click the Back or Close button on your browser to avoid interruptions.
+        </p>
+    </div>
+</div>

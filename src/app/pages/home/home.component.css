@@ -1,0 +1,36 @@
+.product-box.style-2 {
+    border-radius: 0px;
+    height: 600px;
+}
+
+.about-style4 .side-content:after {
+    left: 56%;
+}
+
+.masonry-item {
+    width: 200px;
+}
+
+.swiper-product .product-media {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+}
+
+.swiper-product .product-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.about-thumb {
+    aspect-ratio: 510 / 689;
+    max-width: 510px;
+    width: 100%;
+    overflow: hidden;
+}
+
+.about-thumb img {
+    width: 100%;
+    height: auto;
+    display: block;
+}

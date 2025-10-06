@@ -1,0 +1,69 @@
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    color: #fff;
+}
+
+.status-badge.processing {
+    background-color: #007bff;
+}
+
+.status-badge.confirmed {
+    background-color: #0d6efd;
+}
+
+.status-badge.pickup-scheduled {
+    background-color: #fd7e14;
+}
+
+.status-badge.shipped {
+    background-color: #6610f2;
+}
+
+.status-badge.transit {
+    background-color: #17a2b8;
+}
+
+.status-badge.out-for-delivery {
+    background-color: #fd20a0;
+}
+
+.status-badge.out-for-pickup {
+    background-color: #20c997;
+}
+
+.status-badge.delivered {
+    background-color: #28a745;
+}
+
+.status-badge.rto-initiated {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.status-badge.rto-in-transit {
+    background-color: #17a2b8;
+}
+
+.status-badge.rto-out-for-delivery {
+    background-color: #fd20a0;
+}
+
+.status-badge.rto-delivered {
+    background-color: #20c997;
+}
+
+.status-badge.cancelled {
+    background-color: #dc3545;
+}
+
+.status-badge.on-hold {
+    background-color: #6c757d;
+}
+
+.status-badge.delivery-failed {
+    background-color: #fd3545;
+}

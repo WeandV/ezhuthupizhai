@@ -1,0 +1,119 @@
+.address-card.selected-address {
+    background: white;
+    box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+}
+
+.address-card .account-address-box {
+    border: none !important;
+}
+
+.address-card .account-address-bottom {
+    border: none;
+    background-color: transparent;
+}
+
+.order-detail {
+    border-radius: 0px;
+}
+
+.address-card.selected-address {
+    background: white;
+    box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+}
+
+.address-card .account-address-box {
+    border: none !important;
+}
+
+.address-card .account-address-bottom {
+    border: none;
+    background-color: transparent;
+}
+
+.order-detail {
+    border-radius: 0px;
+}
+
+/* Hide default radio */
+.custom-radio input[type="radio"] {
+    display: none;
+
+}
+
+/* Custom radio circle */
+.radio-checkmark {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid #31a56d;
+    position: relative;
+    display: inline-block;
+    transition: all 0.2s;
+    margin-right: 5px;
+}
+
+/* Checked state: green background */
+.custom-radio input[type="radio"]:checked+.radio-checkmark {
+    background-color: #31a56d;
+    border-color: #31a56d;
+}
+
+/* White checkmark */
+.custom-radio input[type="radio"]:checked+.radio-checkmark::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 6px;
+    height: 12px;
+    border: solid white;
+    border-width: 0 3px 3px 0;
+    transform: translate(-50%, -60%) rotate(45deg);
+}
+
+
+.custom-radio.selected-courier {
+    border: 1px solid #31a56d;
+    border-radius: 3px;
+    padding: 10px;
+    background-color: #e6f4ea;
+}
+
+.custom-radio {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+    padding: 10px;
+    background-color: transparent;
+}
+
+.text-color {
+    color: #35383c;
+}
+
+.overlay-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 6px solid #ddd;
+    border-top-color: #0d6efd;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

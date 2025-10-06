@@ -1,0 +1,21 @@
+.shop-card .dz-content {
+    height: 100% !important;
+    margin-top: 10px;
+}
+
+.quickview-image {
+    object-fit: cover;
+    border-radius: 20px !important;
+}
+
+[class*="icon-bx-"][class*="bg-"] a,
+[class*="icon-bx-"][class*="bg-"] span {
+    color: green !important;
+    font-weight: 500 !important;
+}
+
+
+.dz-media img {
+    aspect-ratio: 1 / 1;
+    display: block;
+}

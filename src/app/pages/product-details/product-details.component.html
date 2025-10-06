@@ -1,0 +1,209 @@
+<div class="page-content bg-light" *ngIf="product">
+    <div class="d-sm-flex justify-content-between container-fluid py-3">
+        <nav aria-label="breadcrumb" class="breadcrumb-row">
+            <ul class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a routerLink="home"> Home</a></li>
+                <li class="breadcrumb-item"><a routerLink="shop"> Books</a></li>
+                <li class="breadcrumb-item">{{ product.name }}</li>
+            </ul>
+        </nav>
+    </div>
+    <section class="content-inner py-0 pb-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-xl-6 col-md-6">
+                    <div class="dz-product-detail static-media sticky-top">
+                        <div class="row align-items-center gx-xl-4 gx-3" id="lightgallery">
+                            <ng-container *ngIf="hasImages">
+                                <div class="col-xl-6 col-md-6 col-6" *ngFor="let image of thumbnailImages">
+                                    <div class="dz-media DZoomImage">
+                                        <a class="mfp-link lg-item" [href]="image.image_url"
+                                            [attr.data-src]="image.image_url">
+                                            <i class="feather icon-maximize dz-maximize top-left"></i>
+                                        </a>
+                                        <img [src]="image.image_url" [alt]="product.name" width="300" height="300"
+                                            loading="lazy">
+                                    </div>
+                                </div>
+                            </ng-container>
+                            <ng-container *ngIf="hasImages">
+                                <div class="col-xl-6 col-md-6 col-6" *ngFor="let image of additionalImages">
+                                    <div class="dz-media DZoomImage">
+                                        <a class="mfp-link lg-item" [href]="image.image_url"
+                                            [attr.data-src]="image.image_url">
+                                            <i class="feather icon-maximize dz-maximize top-left"></i>
+                                        </a>
+                                        <img [src]="image.image_url" [alt]="product.name" width="300" height="300"
+                                            loading="lazy">
+                                    </div>
+                                </div>
+                            </ng-container>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-6 col-md-6">
+                    <div class="dz-product-detail style-2 p-t20 ps-0">
+                        <div class="dz-content">
+                            <div class="dz-content-footer m-0">
+                                <div class="dz-content-start">
+                                    <span class="badge mb-2" *ngIf="product.tag">{{ product.tag
+                                        }}</span>
+                                    <h4 class="title mb-3">
+                                        {{ product.tamil_name }} <span class="fs-13">({{product.name}})</span>
+                                    </h4>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="accordion dz-accordion accordion-sm mb-2" data-wow-delay="0.3s"
+                                    id="accordionFaq">
+                                    <div class="accordion-item" *ngFor="let acc of product.accordion; let i = index">
+                                        <h2 class="accordion-header" [id]="'heading' + i">
+                                            <a href="javascript:void(0);" class="accordion-button"
+                                                [class.collapsed]="i !== 0" data-bs-toggle="collapse"
+                                                [attr.data-bs-target]="'#collapse' + i"
+                                                [attr.aria-controls]="'collapse' + i"
+                                                [attr.aria-expanded]="i === 0 ? 'true' : 'false'">
+                                                {{ acc.title }}
+                                                <span class="toggle-close"></span>
+                                            </a>
+                                        </h2>
+                                        <div [id]="'collapse' + i" class="accordion-collapse collapse"
+                                            [ngClass]="{ 'show': i === 0 }" [attr.aria-labelledby]="'heading' + i"
+                                            data-bs-parent="#accordionFaq">
+                                            <div class="accordion-body p-0 pt-2">
+                                                <p class="m-b0">{{ acc.description }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="dz-info">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <p class="text-black fs-4 fw-bold mb-1 ">
+                                            SKU
+                                        </p>
+                                        <p class="mb-0 fs-6 noto-sans-tamil">{{product.sku}}
+                                        </p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <p class="text-black fs-4 fw-bold mb-1 ">
+                                            Category
+                                        </p>
+                                        <p class="mb-0 fs-6 noto-sans-tamil">
+                                            {{product.categories}} </p>
+                                    </div>
+                                    <div class="col-md-4" *ngIf="product.tag && product.tag.trim().length > 0">
+                                        <p class="text-black fs-4 fw-bold mb-1 ">
+                                            Offer
+                                        </p>
+                                        <p class="mb-0 fs-6 noto-sans-tamil"> {{product.tag}}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="meta-content m-b20 d-flex align-items-end justify-content-between mbl-price">
+                                <div class="me-3">
+                                    <span class="form-label">Price</span>
+                                    <p class="fs-3 mb-0">
+                                        <ng-container
+                                            *ngIf="product.special_price !== null && product.special_price !== undefined && +product.special_price > 0; else mrpPriceBlock">
+                                            &#8377;{{ product.special_price }}
+                                            <del class="text-red fs-4"
+                                                *ngIf="product.mrp_price !== product.special_price">&#8377;
+                                                {{product.mrp_price}}</del>
+                                        </ng-container>
+                                        <ng-template #mrpPriceBlock>
+                                            &#8377;{{ product.mrp_price }}
+                                        </ng-template>
+                                    </p>
+                                </div>
+                                <div class="btn-quantity light me-0">
+                                    <label class="form-label">Quantity</label>
+                                    <div class="input-group bootstrap-touchspin">
+                                        <span class="input-group-addon bootstrap-touchspin-prefix"
+                                            style="display: none;"></span>
+                                        <span class="input-group-btn-vertical">
+                                            <button class="btn btn-default bootstrap-touchspin-down" type="button"
+                                                (click)="decrementQuickViewQuantity(product)">
+                                                <i class="fa-solid fa-minus"></i>
+                                            </button>
+                                        </span>
+                                        <input type="text" [value]="getQuickViewQuantity(product.id)"
+                                            (change)="onQuickViewQuantityChange(product.id, $event)"
+                                            name="quickViewQuantity_{{product.id}}" class="form-control text-center"
+                                            readonly>
+                                        <span class="input-group-addon bootstrap-touchspin-postfix"
+                                            style="display: none;"></span>
+                                        <span class="input-group-btn-vertical">
+                                            <button class="btn btn-default bootstrap-touchspin-up" type="button"
+                                                (click)="incrementQuickViewQuantity(product)">
+                                                <i class="fa-solid fa-plus"></i>
+                                            </button>
+                                        </span>
+                                    </div>
+                                </div>
+                                <tbody>
+                                    <span class="form-label">Total</span>
+                                    <tr class="total">
+                                        <td class="price">
+                                            &#8377;{{ getTotalPrice(product) | number:'1.2-2' }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cart-detail border-0 p-0">
+                        <button type="button" class="btn btn-secondary" (click)="onAddToCart(product)">ADD
+                            TO
+                            CART</button>
+                    </div>
+                    <div class="mt-3">
+                        <div *ngIf="product.offers" class="bg-black pt-1 pb-1" style="border-radius: 10px;">
+                            <div class="d-flex justify-content-between text-white"
+                                style="padding: 0px 20px !important;">
+                                <p class="mb-1">Offers and Discounts.</p>
+                                <p class="mb-1">Powered by Ezhuthupizhai.</p>
+                            </div>
+                            <div class="icon-bx-wraper style-4 p-1 m-b1 bg-white p-1 ms-1 me-1"
+                                style="border-radius: 10px;">
+                                <div class="icon-content m-0 p-1 w-100">
+                                    <h6 class="dz-title fs-3 mb-0 fw-bold text-center"
+                                        [innerHTML]="getSanitizedOffers(product.offers)">
+                                    </h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- <section class="content-inner-3 py-0 pb-4">
+        <div class="container product-description pt-3">
+            <h2 class="title text-center mb-3">Product Description</h2>
+            <div class="detail-bx text-center">
+                <p class="para-textnoto-sans-tamil mb-0 fs-5" [innerHTML]="getSanitizedDescription()"></p>
+            </div>
+        </div>
+    </section> -->
+    <section class="content-inner-3 py-0 pb-4">
+        <div class="container product-description pt-3">
+            <div class="row g-lg-4 g-3" *ngIf="videos.length > 0; else noVideos">
+                <div class="col-xl-4 col-md-4 col-sm-4 col-12" *ngFor="let video of videos">
+                    <div class="related-img dz-media video-container">
+                        <video [src]="video.video_url" controls loop muted playsinline
+                            [title]="'Product Video ' + video.id" [poster]="video.thumb_url">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                </div>
+            </div>
+
+            <ng-template #noVideos>
+                <p class="text-center">No videos found for this product.</p>
+            </ng-template>
+        </div>
+    </section>
+</div>

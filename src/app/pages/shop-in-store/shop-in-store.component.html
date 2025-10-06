@@ -1,0 +1,53 @@
+<div class="page-content">
+    <div class="dz-bnr-inr bg-secondary dz-bnr-inr-md"
+        style="background-image:url(assets/images/banner/page-title.jpg);">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-5">
+                    <div class="dz-bnr-inr-entry text-start">
+                        <nav aria-label="breadcrumb" class="breadcrumb-row">
+                            <p class="text-white mb-1 fs-2">ஆன்லைனில் மட்டுமல்லாமல்,</p>
+                            <p class="text-white mb-1 fs-2">உங்கள் அருகாமையிலும்.</p>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <section class="dz-pricingtable">
+        <div class="container">
+            <div class="row pricingtable-wraper">
+                <ng-container *ngIf="vendors && vendors.length > 0">
+                    <div class="col-xl-4 col-lg-4 col-md-4 col-12" *ngFor="let vendor of vendors">
+                        <div class="pricingtable-wrapper bg-light style-1 bg-light mb-3">
+                            <div class="pricingtable-inner">
+                                <div class="pricingtable-title">
+                                    <img [src]="vendor.flag" alt="{{ vendor.name }} flag" width="40" height="27"
+                                        loading="lazy"
+                                        style="position: absolute; top: 15px; right: 20px; border: 1px solid black;" />
+
+                                    <img *ngIf="vendor.logo" [src]="vendor.logo" alt="{{ vendor.name }} logo"
+                                        class="vendor-logo mb-4" width="200" height="100" loading="lazy"
+                                        style="width: 200px;" />
+
+                                    <h3 class="title fs-3">{{ vendor.name }}</h3>
+                                    <p class="text-black">
+                                        Location : {{ vendor.address_line1 }}, {{ vendor.address_line2 }}, {{
+                                        vendor.city
+                                        }}, {{
+                                        vendor.state }} - {{ vendor.pincode }}
+                                    </p>
+                                    <a *ngIf="vendor.phone" [href]="'tel:' + vendor.phone" class="fs-3 read-btn">
+                                        <i class="fa-solid fa-phone me-2"></i> {{ vendor.phone }}</a>
+                                    <p *ngIf="!vendor.phone" class="font-15 read-btn">
+                                        Call: Not Available
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </ng-container>
+            </div>
+        </div>
+    </section>
+</div>

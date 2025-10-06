@@ -1,0 +1,80 @@
+.dz-offcanvas.offcanvas.offcanvas-end,
+.dz-offcanvas.offcanvas.offcanvas-top {
+    background-color: var(--light);
+}
+
+.cart-item-controls {
+    margin-top: 10px;
+}
+
+.cart-widget {
+    align-items: start;
+}
+
+.dz-price {
+    margin-left: auto;
+}
+
+.cart-widget {
+    display: flex;
+    align-items: center;
+}
+
+.cart-content {
+    flex-grow: 1;
+    margin-right: 15px;
+}
+
+.dz-close {
+    font-size: 20px;
+    color: #999;
+}
+
+.view-all-coupons-link {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 14px;
+    display: block;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.view-all-coupons-link:hover {
+    text-decoration: underline;
+}
+
+.sidebar-cart-list li {
+    padding: 10px 0;
+}
+
+.dz-offcanvas.offcanvas.offcanvas-end .offcanvas-body {
+    padding: 20px;
+}
+
+.quantity-button {
+    height: 20px !important;
+}
+
+.coupon-available-section,
+.coupon-applied-section,
+.coupon-display-box {
+    margin-top: 0px;
+}
+
+.coupon-action .apply-button {
+    color: white;
+    background: #381059;
+    padding: 8px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 900;
+    border-radius: 99px !important;
+}
+
+.cart-total {
+    padding: 0px;
+    padding-bottom: 10px;
+    margin-bottom: 0px;
+}

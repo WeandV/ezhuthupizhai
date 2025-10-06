@@ -1,0 +1,495 @@
+.card-container {
+    margin-bottom: 20px;
+}
+
+.shop-card .dz-content {
+    padding: 6px;
+}
+
+.meta-content {
+    margin: 0px;
+    padding: 6px;
+}
+
+.shop-card .price {
+    font-size: 24px;
+    font-family: "Roboto", sans-serif;
+}
+
+.shop-card .price del {
+    font-size: 14px;
+    color: red;
+    font-family: "Roboto", sans-serif;
+}
+
+.add-cart-button {
+    padding: 6px;
+    display: flex;
+}
+
+.dz-product-detail .dz-info {
+    margin-bottom: 40px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.about-style4 {
+    padding-top: 10px;
+}
+
+.main-slider-wrapper .star-1,
+.main-slider-wrapper .star-2 {
+    width: 105px;
+}
+
+.quick-view-modal .dz-product-detail.style-2 .meta-content {
+    margin-bottom: 10px !important;
+}
+
+.icon-bx-wraper.style-4 {
+    padding: 10px;
+}
+
+.main-slider-wrapper .banner-media:after {
+    font-size: 50px;
+    left: -20px;
+}
+
+.input-group.bootstrap-touchspin {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    /* Explicitly prevent wrapping */
+    align-items: center !important;
+    justify-content: center !important;
+    /* Or space-between */
+    width: auto !important;
+    max-width: 160px !important;
+    /* Adjust as needed */
+    min-width: 120px !important;
+    /* Ensure enough space */
+    height: 40px !important;
+    /* Consistent height for the whole counter */
+    /* Remove any default input-group borders if they are causing issues */
+    border: none !important;
+}
+
+/* Force children spans to be proper flex items and prevent full width */
+.input-group.bootstrap-touchspin .input-group-btn-vertical {
+    display: flex !important;
+    /* Ensure it is a flex item itself */
+    flex-basis: auto !important;
+    /* Let content determine base size */
+    flex-grow: 0 !important;
+    /* Prevent from growing */
+    flex-shrink: 0 !important;
+    /* Prevent from shrinking */
+    width: 40px !important;
+    /* Fixed width for the button's container */
+    height: 100% !important;
+    /* Fill parent height */
+    padding: 0 !important;
+    margin: 0 !important;
+    position: static !important;
+    /* CRITICAL: Remove absolute positioning */
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    vertical-align: middle !important;
+}
+
+/* Force the input field to be a proper flex item and control its width */
+.input-group.bootstrap-touchspin .form-control {
+    display: block !important;
+    /* Input typically remains 'block' inside its flex item container */
+    flex-basis: auto !important;
+    /* Let content determine base size */
+    flex-grow: 1 !important;
+    /* Allow it to grow and fill available space */
+    flex-shrink: 1 !important;
+    /* Allow it to shrink if needed */
+    width: auto !important;
+    /* Let flexbox control the width */
+    max-width: 70px !important;
+    /* Limit maximum width */
+    min-width: 40px !important;
+    /* Ensure minimum width */
+    height: 100% !important;
+    /* Match parent height */
+    margin: 0 5px !important;
+    /* Space between input and buttons */
+    padding: 0 5px !important;
+    /* Internal padding */
+    text-align: center !important;
+    border-radius: 5px !important;
+    border: 1px solid var(--border-color, #ccc) !important;
+}
+
+/* Style the buttons within their spans */
+button.bootstrap-touchspin-down,
+button.bootstrap-touchspin-up {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 100% !important;
+    /* Fill parent span height */
+    width: 100% !important;
+    /* Fill parent span width */
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 50% !important;
+    border: 1px solid var(--primary, #007bff) !important;
+    background-color: transparent !important;
+    color: var(--primary, #007bff) !important;
+    font-size: 1.2em !important;
+    cursor: pointer;
+    position: static !important;
+    /* Crucial: Ensure buttons themselves are static */
+    z-index: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Specific styling for the plus button */
+button.bootstrap-touchspin-up {
+    background-color: var(--primary, #007bff) !important;
+    color: #fff !important;
+}
+
+/* Ensure icons are displayed */
+.fa-solid.fa-minus,
+.fa-solid.fa-plus {
+    display: block !important;
+    line-height: 1 !important;
+}
+
+.dz-offcanvas.offcanvas.offcanvas-end .offcanvas-body {
+    padding: 40px;
+}
+
+.icon-bx-wraper.style-4 {
+    border: 1px dotted var(--secondary)
+}
+
+/* .pricingtable-wrapper.style-1.active,
+.pricingtable-wrapper.style-1:hover {
+    margin-top: 0;
+    transform: none !important;
+    background-color: transparent;
+} */
+
+.pricingtable-wrapper.style-1 {
+    border: none !important;
+}
+
+.login-area,
+.forget-password-area {
+    padding: 30px;
+}
+
+.login-area .secure-input .show-pass:after,
+.forget-password-area .secure-input .show-pass:after {
+    display: none !important;
+}
+
+.shop-card {
+    /* border: 1px solid #2B5DA8; */
+    padding: 10px;
+    border-radius: 20px;
+    background-color: #a6dff136;
+}
+
+.btn-border {
+    border: 1px solid #2B5DA8;
+}
+
+.header-nav.w3menu .nav>li.menu-item-has-children>a::after,
+.header-nav.w3menu .nav>li.sub-menu-down>a::after {
+    display: none !important;
+}
+
+.logo-header img {
+    height: 100%;
+    max-width: 100%;
+}
+
+.tamil-font {
+    font-family: "Noto Serif Tamil", serif !important;
+}
+
+.badge {
+    background: green !important;
+}
+
+.shop-card .product-tag .badge {
+    background: green;
+    color: white;
+    font-weight: 900;
+}
+
+.login-area {
+    border: none !important;
+}
+
+
+.coupon-available-section,
+.coupon-applied-section,
+.coupon-display-box {
+    background-color: #FFD700;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 5px;
+    margin-top: 20px;
+}
+
+.icon-bx-wraper.style-4 {
+    border: 1px dotted #bae7bc;
+}
+
+.coupon-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.coupon-icon {
+    font-size: 30px;
+    color: #333;
+}
+
+.coupon-details {
+    flex-grow: 1;
+}
+
+
+.coupon-code-text {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 0;
+}
+
+.coupon-action .apply-button {
+    background-color: #333;
+    color: #fff;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.coupon-action .apply-button:hover {
+    background-color: #555;
+}
+
+.coupon-item.applied-status .coupon-icon i {
+    color: green;
+}
+
+.coupon-applied-code {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    margin-top: 5px;
+    margin-bottom: 0;
+}
+
+.coupon-expiry-text {
+    font-size: 12px;
+    color: #888;
+    margin-top: 5px;
+}
+
+.coupon-action .remove-button {
+    color: #fff;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.quantity-selector {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.quantity-button {
+    background-color: transparent;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 16px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 0px;
+    transition: background-color 0.2s ease;
+}
+
+.quantity-button:hover {
+    background-color: #e0e0e0;
+}
+
+.quantity-input {
+    border: none;
+    text-align: center;
+    width: 40px;
+    padding: 0;
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.quantity-input::-webkit-outer-spin-button,
+.quantity-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.quantity-input {
+    background: transparent;
+}
+
+.site-footer.style-1 .footer-top {
+    padding: 70px 0px 0px;
+}
+
+.header-nav.w3menu .nav>li>a {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.shop-card .product-tag .badge {
+    font-family: var(--font-family-base);
+    font-size: 15px !important;
+}
+
+.site-filters.style-1 li a {
+    font-family: var(--font-family-title);
+    color: black;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.site-filters.style-1 li.active {
+    background-color: green;
+}
+
+.dz-card.style-5.blog-half .dz-info {
+    padding: 30px;
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    background: #d0e9f1;
+    border-radius: 20px;
+
+}
+
+.dz-card.style-5.blog-half .dz-info a {
+    color: #000;
+    font-size: 18px;
+}
+
+.btn-theme.disabled,
+.btn-theme:disabled,
+.btn-theme:not(:disabled):not(.disabled).active,
+.btn-theme:not(:disabled):not(.disabled):active,
+.btn-theme:active,
+.btn-theme:focus,
+.btn-theme:hover {
+    background-color: #d0e9f1;
+    color: #000;
+    border-color: #d0e9f1;
+}
+
+.dz-accordion.accordion-sm .accordion-header .accordion-button {
+    padding: 5px 10px;
+    font-weight: 500;
+}
+
+.dz-accordion.accordion-sm .accordion-header .accordion-button .toggle-close {
+    color: #fff;
+    height: 19px;
+    width: 19px;
+    line-height: 19px;
+}
+
+.fs-13 {
+    font-size: 13px !important;
+}
+
+@media only screen and (max-width: 575px) {
+    .site-filters.style-1 {
+        margin-bottom: 10px !important;
+    }
+
+    .mbl-price {
+        display: block !important;
+    }
+
+    .cart-detail .icon-bx-wraper.style-4 p {
+        display: block;
+    }
+
+    .product-box.style-2 {
+        height: 160px !important;
+    }
+
+    .fs-15 {
+        font-size: 15px !important;
+    }
+}
+
+.about-style4 .side-content .about-thumb {
+    margin-top: -70px;
+}
+
+
+.full-page-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 99999;
+    background-color: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.spinner-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.spinner-border {
+    width: 4rem;
+    height: 4rem;
+    border-width: .4em;
+    color: #fff !important;
+}
+
+.full-page-loader p {
+    color: #fff;
+    font-size: 24px;
+    margin-top: 10px;
+}
+
+.spinner-overlay>p:first-of-type {
+    margin-top: 1.5rem !important;
+}

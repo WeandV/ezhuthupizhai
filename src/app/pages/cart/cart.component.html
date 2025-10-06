@@ -1,0 +1,324 @@
+<div class="page-content bg-white">
+    <div class="dz-bnr-inr bg-secondary dz-bnr-inr-md"
+        style="background-image:url(https://ezhuthupizhai.in/wp-content/uploads/2024/03/Banner_3-scaled-1.jpg);">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-5">
+                    <div class="dz-bnr-inr-entry text-start">
+                        <h1 class="text-white">Shop Cart</h1>
+                        <nav aria-label="breadcrumb" class="breadcrumb-row">
+                            <ul class="breadcrumb text-white">
+                                <li class="breadcrumb-item"><a href="/home" class="text-white"> Home</a></li>
+                                <li class="breadcrumb-item text-white">Shop Cart</li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <section class="content-inner shop-account">
+        <div class="container">
+            <ng-container *ngIf="(cartItems$ | async) as cartItems">
+                <div class="row" *ngIf="cartItems.length > 0; else emptyCartContent">
+                    <div class="col-lg-8">
+                        <div class="table-responsive bg-light rounded p-3 mb-4">
+                            <table class="table text-black">
+                                <thead>
+                                    <tr>
+                                        <th>Image</th>
+                                        <th>Name</th>
+                                        <th>Price</th>
+                                        <th>Quantity</th>
+                                        <th>Subtotal</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let item of cartItems">
+                                        <td class="product-item-img">
+                                            <img [src]="item.product.thumbnail_image || 'https://placehold.co/100x100'"
+                                                [alt]="item.product.name">
+                                        </td>
+                                        <td class="product-item-name">{{ item.product.name }}
+                                            <div class="pricingtable-wrapper style-1 p-1 mt-0 border-0"
+                                                *ngIf="item.product.options?.['is_byob_box']">
+                                                <div class="pricingtable-inner mb-4">
+                                                    <div class="pricingtable-list">
+                                                        <ul class="byob-item-list pricingtable-features p-0">
+                                                            <li
+                                                                *ngFor="let itemName of item.product.options?.['selected_item_names']">
+                                                                {{ itemName }}
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="product-item-price">
+                                            &#8377;{{ item.effectivePrice | number:'1.2-2' }}
+                                        </td>
+                                        <td class="product-item-quantity">
+                                            <div
+                                                class="d-flex justify-content-between align-items-center cart-item-controls">
+                                                <div class="quantity-selector">
+                                                    <button class="quantity-button minus" type="button"
+                                                        (click)="decrementQuantity(item.product.id, item.quantity)">
+                                                        <i class="fa-solid fa-minus"></i>
+                                                    </button>
+                                                    <input type="text" [value]="item.quantity"
+                                                        name="quantity_{{item.product.id}}" class="quantity-input"
+                                                        readonly>
+                                                    <button class="quantity-button plus" type="button"
+                                                        (click)="incrementQuantity(item.product.id, item.quantity)">
+                                                        <i class="fa-solid fa-plus"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="product-item-totle">
+                                            &#8377;{{ (item.effectivePrice * item.quantity) | number:'1.2-2' }}
+                                        </td>
+                                        <td class="product-item-close">
+                                            <a href="javascript:void(0);" (click)="onRemoveItem(item.product.id)">
+                                                <i class="fa-regular fa-trash-can fs-6 text-red"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-12">
+                            <div class="bg-light rounded p-3 mb-4">
+                                <h5 class="mb-3">Available Coupons For You</h5>
+                                <div class="row">
+                                    <ng-container
+                                        *ngIf="(visibleCouponsWithEligibility$ | async) as couponsDisplay; else noAvailableCoupons">
+                                        <ng-container *ngIf="couponsDisplay.length > 0; else noAvailableCoupons">
+                                            <ng-container *ngFor="let couponItem of couponsDisplay">
+                                                <div class="col-md-6 col-lg-6">
+                                                    <div class="coupon-card-wrapper">
+                                                        <div class="card coupon-card" [ngClass]="{
+                                    'applied': cartService.isCouponActive(couponItem.coupon.coupon_code),
+                                    'ineligible': !couponItem.isEligible
+                                }" [title]="!couponItem.isEligible ? 'This coupon is not eligible for your current cart.' : ''">
+                                                            <div class="main">
+                                                                <div class="co-img" style="width:30%;">
+                                                                    <img src="assets/images/logo.png"
+                                                                        alt="Coupon Logo" />
+                                                                </div>
+                                                                <div class="vertical" style="width:5%;"></div>
+                                                                <div class="content" style="width:65%;">
+                                                                    <h2 class="fs-6 mb-1">COUPON</h2>
+                                                                    <h1 class="mb-1">
+                                                                        <ng-container
+                                                                            *ngIf="couponItem.coupon.discount_type === 'fixed'">
+                                                                            ₹{{ couponItem.coupon.discount_value |
+                                                                            number:'1.0-0' }} <span
+                                                                                class="fs-6">OFF</span>
+                                                                        </ng-container>
+                                                                        <ng-container
+                                                                            *ngIf="couponItem.coupon.discount_type === 'percentage'">
+                                                                            {{ couponItem.coupon.discount_value }}%
+                                                                            <span class="fs-6">OFF</span>
+                                                                        </ng-container>
+                                                                        <ng-container
+                                                                            *ngIf="couponItem.coupon.discount_type === 'delivery_free'">
+                                                                            <span class="fs-6">FREE DELIVERY</span>
+                                                                        </ng-container>
+                                                                    </h1>
+                                                                    <p class="fs-6 mb-1">{{
+                                                                        couponItem.coupon.display_text }}</p>
+                                                                </div>
+                                                            </div>
+                                                            <div class="copy-button">
+                                                                <input
+                                                                    [id]="'couponCode_' + couponItem.coupon.coupon_code"
+                                                                    type="text" readonly
+                                                                    [value]="couponItem.coupon.coupon_code" />
+                                                                <button
+                                                                    (click)="onApplyOrRemoveCoupon(couponItem.coupon.coupon_code, couponItem.isEligible)"
+                                                                    class="copybtn" [disabled]="!couponItem.isEligible"
+                                                                    [title]="couponItem.isEligible ? (cartService.isCouponActive(couponItem.coupon.coupon_code) ? 'Click to remove this coupon' : 'Click to apply this coupon') : 'This coupon is not eligible for your current cart.'">
+                                                                    <ng-container
+                                                                        *ngIf="cartService.isCouponActive(couponItem.coupon.coupon_code); else applyButton">
+                                                                        REMOVE
+                                                                    </ng-container>
+                                                                    <ng-template #applyButton>
+                                                                        <ng-container
+                                                                            *ngIf="couponItem.isEligible; else ineligibleButton">
+                                                                            APPLY
+                                                                        </ng-container>
+                                                                        <ng-template #ineligibleButton>
+                                                                            INELIGIBLE
+                                                                        </ng-template>
+                                                                    </ng-template>
+                                                                </button>
+                                                                <button class="copy-icon-btn"
+                                                                    (click)="onCopyCouponCode(couponItem.coupon.coupon_code)">
+                                                                    <i class="fa-regular fa-clipboard"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </ng-container>
+                                        </ng-container>
+                                    </ng-container>
+                                    <ng-template #noAvailableCoupons>
+                                        <div class="col-12">
+                                            <p class="text-muted mt-2">No special coupons available for you right now.
+                                            </p>
+                                        </div>
+                                    </ng-template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <h4 class="title mb15">Cart Total</h4>
+                        <div class="cart-detail border-0 p-0">
+                            <div *ngIf="showAlert" class="alert alert-{{alertType}} alert-dismissible fade show"
+                                role="alert">
+                                {{ alertMessage }}
+                                <button type="button" class="btn-close" (click)="resetAlert()"
+                                    aria-label="Close"></button>
+                            </div>
+                            <ng-container
+                                *ngIf="(currentlyAppliedCoupon$ | async) as appliedCoupon; else noAppliedCoupon else noAvailableCouponscart">
+                                <div class="coupon-display-box icon-bx-wraper style-4 m-b10 d-block">
+                                    <div class="coupon-item applied-status">
+                                        <div class="coupon-icon">
+                                            <i class="fa-solid fa-check-circle text-white"></i>
+                                        </div>
+                                        <div class="coupon-details">
+                                            <p class="text-white oupon-offer-text mb-2">
+                                                <ng-container *ngIf="appliedCoupon.discount_type === 'fixed'">
+                                                    Flat ₹{{ appliedCoupon.discount_value | number:'1.0-0' }} OFF on
+                                                    Selected product
+                                                </ng-container>
+                                                <ng-container *ngIf="appliedCoupon.discount_type === 'percentage'">
+                                                    {{ appliedCoupon.discount_value }}% OFF on Selected product
+                                                </ng-container>
+                                                <ng-container *ngIf="appliedCoupon.discount_type === 'delivery_free'">
+                                                    FREE DELIVERY on Selected product
+                                                </ng-container>
+                                            </p>
+                                            <p class="text-white coupon-code-text">
+                                                Coupon Code : <span class="text-yellow fw-bold">{{
+                                                    appliedCoupon.coupon_code }}</span>
+                                            </p>
+                                            <p class="text-white coupon-expiry-text">Expires on {{
+                                                appliedCoupon.expiry_date |
+                                                date:'mediumDate' }}</p>
+                                        </div>
+                                        <div class="coupon-action">
+<button type="button" class="btn remove-button" (click)="onApplyOrRemoveCoupon(appliedCoupon.coupon_code, true)">
+                                                <i class="fa-regular fa-trash-can fs-6 text-red"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </ng-container>
+                            <ng-template #noAvailableCouponscart>
+                                <div class="coupon-display-box icon-bx-wraper style-4 m-b10 d-none"
+                                    style="background-color: #fdd9d9;">
+                                    <p class="text-center text-muted m-t10">No special coupons available for you right
+                                        now.</p>
+                                </div>
+                            </ng-template>
+                            <ng-template #noAppliedCoupon>
+                                <div class="coupon-display-box icon-bx-wraper style-4 m-b10 d-block"
+                                    style="background-color: #fdd9d9;">
+                                    <p class="text-center text-muted m-t10">No coupon applied.</p>
+                                </div>
+                            </ng-template>
+                            <div class="icon-bx-wraper style-4 p-2 m-b10 border border-black bg-white">
+                                <div class="icon-bx">
+                                    <img src="assets/images/info.png" style="width: 40px;" alt="/">
+                                </div>
+                                <div class="icon-content">
+                                    <h6 class="dz-title text-red mb-0 fs-6 fw-bold">Important
+                                        Notice</h6>
+                                    <p class="mb-0 text-gray" style="font-size: 13px;">
+                                        Delivery may be delayed on weekends or peak times.
+                                        Contact support for any queries.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="save-text mt-2 mb-2 pt-2 pb-2">
+                                <i class="icon feather icon-check-circle"></i>
+                                <span class="m-l10">You will save &#8377;{{ (totalCouponDiscount$ | async) |
+                                    number:'1.2-2'
+                                    }} on this order</span>
+                            </div>
+                            <table class="table table-hover">
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <h6 class="mb-0">Items Total</h6>
+                                        </td>
+                                        <td class="price">
+                                            &#8377;{{ cartTotal$ | async | number:'1.2-2' }}
+                                        </td>
+                                    </tr>
+
+                                    <tr *ngIf="(totalCouponDiscount$ | async)! > 0">
+                                        <td>
+                                            <h6 class="mb-0">Offer (Coupon Applied)</h6>
+                                        </td>
+                                        <td class="price text-success">
+                                            - &#8377;{{ totalCouponDiscount$ | async | number:'1.2-2' }}
+                                        </td>
+                                    </tr>
+
+                                    <tr *ngIf="(totalCouponDiscount$ | async)! > 0">
+                                        <td>
+                                            <h6 class="mb-0">Subtotal</h6>
+                                        </td>
+                                        <td class="price">
+                                            &#8377;{{ subTotalAfterDiscount$ | async | number:'1.2-2' }}
+                                        </td>
+                                    </tr>
+
+                                    <!-- <tr>
+                                        <td>
+                                            <h6 class="mb-0">Delivery Charge</h6>
+                                        </td>
+                                        <td class="price">
+                                            <ng-container
+                                                *ngIf="(deliveryCharge$ | async) === 0; else showDeliveryCharge">
+                                                <span class="text-success">FREE</span>
+                                            </ng-container>
+                                            <ng-template #showDeliveryCharge>
+                                                + &#8377;{{ deliveryCharge$ | async | number:'1.2-2' }}
+                                            </ng-template>
+                                        </td>
+                                    </tr> -->
+
+                                    <tr>
+                                        <td>
+                                            <h5 class="mb-0">Final Total</h5>
+                                        </td>
+                                        <td class="price">
+                                            <h5 class="mb-0">&#8377;{{ finalTotal$ | async | number:'1.2-2' }}</h5>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <a href="checkout" class="btn btn-secondary w-100">Checkout</a>
+                        </div>
+                    </div>
+                </div>
+                <ng-template #emptyCartContent>
+                    <div class="row">
+                        <div class="col-12 text-center py-5">
+                            <h4 class="mb-5">Your cart is empty.</h4>
+                            <a routerLink="/shop" class="btn btn-secondary">Continue Shopping</a>
+                        </div>
+                    </div>
+                </ng-template>
+            </ng-container>
+        </div>
+    </section>
+</div>

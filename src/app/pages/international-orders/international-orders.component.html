@@ -1,0 +1,79 @@
+<div class="page-content bg-light">
+    <div class="dz-bnr-inr bg-secondary dz-bnr-inr-md"
+        style="background-image:url(https://ezhuthupizhai.in/wp-content/uploads/2024/03/Banner_3-scaled-1.jpg);">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="dz-bnr-inr-entry text-start">
+                        <h1 class="text-white">For International Orders</h1>
+                        <nav aria-label="breadcrumb" class="breadcrumb-row">
+                            <ul class="breadcrumb text-white">
+                                <li class="breadcrumb-item"><a href="/home" class="text-white"> Home</a></li>
+                                <li class="breadcrumb-item text-white">For International Orders</li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <section class="content-inner">
+        <div class="container">
+            <div class="row justify-content-md-between align-items-start mb-5">
+                <div class="col-lg-12 col-md-12 text-center">
+                    <div class="section-head style-1 m-b30">
+                        <div class="left-content">
+                            <h2 class="title">Most popular products</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="clearfix">
+                <div class="row g-xl-4 g-3">
+                    <div class="card-container col-6 col-xl-3 col-lg-3 col-md-3 col-sm-6"
+                        *ngFor="let product of filteredProducts">
+                        <div class="shop-card">
+                            <a (click)="viewProductDetails(product)" class="cursor-pointer">
+                                <div class="dz-media">
+                                    <img [src]="product.thumbnail_image" [alt]="product.name">
+                                </div>
+                            </a>
+                            <div class="dz-info">
+                                <div class="dz-content">
+                                    <a (click)="viewProductDetails(product)" class="title w-100 fs-18 text-black cursor-pointer">
+                                        {{ product.name }}
+                                    </a>
+                                </div>
+                                <div class="meta-content">
+                                    <span class="price">
+                                        <ng-container
+                                            *ngIf="product.special_price !== null && product.special_price !== undefined && +product.special_price > 0; else mrpPriceBlock">
+                                            &#8377;{{ product.special_price }}
+                                            <del *ngIf="product.mrp_price !== product.special_price">&#8377;
+                                                {{product.mrp_price}}</del>
+                                        </ng-container>
+                                        <ng-template #mrpPriceBlock>
+                                            &#8377;{{ product.mrp_price }}
+                                        </ng-template>
+                                    </span>
+                                </div>
+                                <div class="add-cart-button">
+                                    <button type="button" class="btn btn-secondary btn-md btn-rounded"
+                                        (click)="viewProductDetails(product)">
+                                        <span class="d-md-block d-none">View Details & Order</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="product-tag" *ngIf="product.tag && product.tag.trim().length > 0">
+                                <span class="badge">{{ product.tag }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div *ngIf="filteredProducts.length === 0" class="text-center py-12">
+              <p class="text-2xl text-gray-600">No international products available at this time.</p>
+            </div>
+        </div>
+    </section>
+</div>
